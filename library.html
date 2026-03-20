@@ -16,19 +16,18 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-height: 100vh; overflow-x: hidden; }
 
-  #auth-screen { display: block; min-height: 100vh; text-align: center; padding: 10vh 2rem 5vh; }
+  #auth-screen { display: block; min-height: 100vh; text-align: center; padding: 15vh 2rem 5vh; }
   .auth-title { font-family: 'Playfair Display', serif; font-size: 50px; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
-  .auth-subtitle { color: var(--muted); font-size: 10px; text-transform: uppercase; margin-bottom: 2rem; letter-spacing: 0.3em; }
+  .auth-subtitle { color: var(--muted); font-size: 10px; text-transform: uppercase; margin-bottom: 3rem; letter-spacing: 0.3em; }
 
-  /* ── DIRECT CONFIG ── */
-  #direct-config { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; max-width: 360px; margin: 0 auto 2rem; text-align: left; border-radius: 8px; }
-  .field-label { display: block; color: var(--muted); font-size: 9px; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 1px; }
-  .field-input { width: 100%; background: #000; border: 1px solid var(--border); color: var(--text); padding: 0.7rem; margin-bottom: 1rem; border-radius: 4px; font-family: inherit; font-size: 13px; }
-  
   #app { display: none; min-height: 100vh; }
   header { display: block; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); position: relative; background: var(--bg); z-index: 100; overflow: hidden; }
   .logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); letter-spacing: 0.2em; float: left; }
   #search { float: right; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 0.8rem; width: 200px; outline: none; }
+
+  .filter-bar { display: block; padding: 0.7rem 1.5rem; border-bottom: 1px solid var(--border); clear: both; overflow: hidden; }
+  .filter-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 10px; padding: 0.3rem 0.8rem; cursor: pointer; text-transform: uppercase; margin-right: 0.5rem; float: left; }
+  .filter-btn.active { color: var(--accent); border-color: var(--accent); }
 
   #book-list { padding: 1.5rem; display: block; font-size: 0; }
   .book-card { display: inline-block; width: 150px; background: var(--surface); border: 1px solid var(--border); cursor: pointer; margin-right: 1.5rem; margin-bottom: 1.5rem; vertical-align: top; font-size: 13px; }
@@ -43,13 +42,13 @@
   #epub-content-area { position: absolute; top: 50px; bottom: 0; left: 0; right: 0; overflow-y: auto; background: var(--reader-bg); -webkit-overflow-scrolling: touch; }
   #epub-container { max-width: 680px; margin: 0 auto; padding: 2rem 1.5rem 4rem; color: var(--reader-text); font-family: 'PT Serif', serif; font-size: 17px; line-height: 1.8; }
   
-  /* ── DEBUG & DIAGNOSTICS ── */
-  #diag-panel { margin: 2rem auto; max-width: 360px; text-align: left; background: #1a1814; border: 1px solid #332d24; padding: 1rem; color: #887e6a; font-family: monospace; font-size: 9px; }
-  .diag-item { border-bottom: 1px solid #28241d; padding: 4px 0; overflow: hidden; }
-  .diag-item span { float: right; color: var(--accent); }
-  #error-monitor { color: #ff6b6b; font-size: 10px; text-align: left; padding: 1rem; border: 1px dashed #ff6b6b; display: none; margin: 1rem auto; max-width: 360px; }
+  #error-monitor { color: #ff6b6b; font-size: 10px; text-align: left; padding: 1rem; border: 1px dashed #ff6b6b; display: none; margin: 2rem auto; max-width: 360px; word-break: break-all; }
   .ctrl-btn { background: #fdfcf9; border: 1px solid #c4bdb0; color: #4a443a; font-size: 11px; padding: 0.5rem 1rem; cursor: pointer; display: inline-block; text-decoration: none; border-radius: 4px; font-weight: bold; }
   .btn-accent { background: var(--accent) !important; color: var(--bg) !important; border: none !important; }
+
+  #loading { display: none; text-align: center; padding: 4rem; }
+  .spinner { display: inline-block; width: 30px; height: 30px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; -webkit-animation: spin 0.8s linear infinite; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 <script>
 window.onerror = function(msg, url, line) {
@@ -62,130 +61,309 @@ window.onerror = function(msg, url, line) {
 
 <div id="auth-screen">
   <div class="auth-title">LIBRARY</div>
-  <div class="auth-subtitle">Personal ePub Collection</div>
+  <div class="auth-subtitle">Service Account Access</div>
   
-  <!-- DIRECT INPUT -->
-  <div id="direct-config">
-    <label class="field-label">OAuth Client ID</label>
-    <input class="field-input" id="cfg-client-id" placeholder="Paste Client ID...">
-    <label class="field-label">Drive Folder</label>
-    <input class="field-input" id="cfg-folder" value="CalibreLibrary">
-    <div style="text-align: right;">
-        <button class="ctrl-btn btn-accent" onclick="saveConfig()">Save Settings</button>
-    </div>
+  <div id="pin-container">
+    <input type="password" pattern="[0-9]*" id="pin-input" placeholder="PIN" style="font-size: 24px; text-align: center; letter-spacing: 0.5em; width: 200px; padding: 10px; background: #000; border: 1px solid var(--border); color: var(--text); border-radius: 4px; margin-bottom: 20px;">
+    <br>
+    <button class="ctrl-btn btn-accent" style="padding: 1rem 3rem; font-size: 16px;" onclick="unlockApp()">Unlock</button>
   </div>
 
-  <div style="margin-bottom: 1.5rem;">
-    <button class="ctrl-btn btn-accent" style="padding: 1.2rem 4rem; font-size: 18px;" onclick="startAuth()">Sign in with Google</button>
-  </div>
-
-  <div style="color: var(--muted); font-size: 10px;">
-    <a href="javascript:alert('Interactivity Check: OK')" style="color:#888; text-decoration: none;">Touch Test</a>
-    <span style="margin: 0 1rem;">|</span>
-    <a href="javascript:injectTestId()" style="color:var(--accent-red); text-decoration: none;">Inject Test ID</a>
+  <div id="auth-loading" style="display:none; color: var(--accent); margin-top: 2rem; font-size: 16px;">
+    <div class="spinner" style="margin-bottom: 1rem;"></div><br>
+    Connecting to Vault...
   </div>
 
   <div id="error-monitor"></div>
-
-  <div id="diag-panel">
-    <div style="font-weight: bold; color: #b5a687; margin-bottom: 10px; text-transform: uppercase;">Detailed Bypass Scan</div>
-    <div class="diag-item">typeof Promise <span id="st-promise">...</span></div>
-    <div class="diag-item">typeof Blob <span id="st-blob">...</span></div>
-    <div class="diag-item">BlobBuilder <span id="st-builder">...</span></div>
-    <div class="diag-item">LocalStorage <span id="st-storage">...</span></div>
-    <div class="diag-item">Active Client ID <span id="st-clientid" style="color:#fff">NONE</span></div>
-  </div>
 </div>
 
 <div id="app">
   <header>
     <div class="logo">LIBRARY</div>
     <input type="search" id="search" placeholder="search..." oninput="filterBooks()">
-    <button class="ctrl-btn" style="border:none; color:var(--muted); float:right;" onclick="signOut()">Sign out</button>
   </header>
-  <div id="loading" style="text-align:center; padding:2rem;"><div class="spinner"></div></div>
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+    <button class="filter-btn" onclick="setFilter('epub', this)">ePub</button>
+    <button class="filter-btn" onclick="setFilter('pdf', this)">PDF</button>
+    <button class="ctrl-btn" style="float:right; border:none; opacity:0.6" onclick="loadLibrary(true)">⟲</button>
+    <span style="color:var(--muted); font-size:10px; float:right; margin-right: 1.5rem; margin-top:5px;" id="book-count"></span>
+  </div>
+  <div id="loading"><div class="spinner"></div></div>
   <div id="book-list"></div>
 </div>
 
 <div id="reader-overlay">
   <div style="height:50px; background:#ede8e0; border-bottom:1px solid #d4cdc0; padding:10px;">
      <button class="ctrl-btn" onclick="closeReader()">✕ Close</button>
-     <span id="reader-title" style="margin-left:1rem; font-family:'Playfair Display'; font-size:13px;"></span>
+     <span id="reader-progress" style="margin-left:1rem; font-family:'IBM Plex Mono'; font-size:10px; color:#6b6358;"></span>
+     <span id="reader-title" style="margin-left:1rem; font-family:'Playfair Display'; font-size:13px; color:#1a1610;"></span>
   </div>
-  <div id="epub-content-area"><div id="epub-container"></div></div>
+  <div id="epub-content-area" onscroll="trackProgress()"><div id="epub-container"></div></div>
+  <iframe id="pdf-frame" style="display:none; width:100%; height:100%; border:none"></iframe>
 </div>
 
 <script>
-// Polyfill origin 
-if (!window.location.origin) window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+// --- CREDENTIALS & CONFIGURATION ---
+var SERVICE_ACCOUNT_EMAIL = 'YOUR_SERVICE_ACCOUNT_EMAIL_HERE';
+var SERVICE_ACCOUNT_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n';
+var FOLDER_NAME = 'CalibreLibrary';
+var APP_PIN = '1234';
+// -----------------------------------
 
-// Global persistence object
-window.safeStorage = {
-  data: {},
-  get: function(k) { try { return localStorage.getItem(k); } catch(e) { return this.data[k] || null; } },
-  set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) { this.data[k] = v; } },
-  remove: function(k) { try { localStorage.removeItem(k); } catch(e) { delete this.data[k]; } }
-};
+var accessToken = null;
+var tokenExpiry = 0;
+var currentZip = null, currentSpine = [], currentTOC = [], blobUrls = [], readerFontSize = 17;
+var allBooks = [], activeFilter = 'all';
 
-window.CONFIG_KEY = 'library_config';
-window.config = JSON.parse(window.safeStorage.get(window.CONFIG_KEY) || '{}');
+// BASE64URL & JWT UTILS
+function b64u(str) { return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function ab2b64u(buffer) {
+    var binary = ''; var bytes = new Uint8Array(buffer);
+    for (var i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    return b64u(binary);
+}
+function str2ab(str) {
+    var buf = new ArrayBuffer(str.length); var bufView = new Uint8Array(buf);
+    for (var i = 0, strLen = str.length; i < strLen; i++) bufView[i] = str.charCodeAt(i);
+    return buf;
+}
+function pem2ab(pem) {
+    var b64Lines = pem.replace('-----BEGIN PRIVATE KEY-----', '').replace('-----END PRIVATE KEY-----', '').replace(/[\r\n\s]/g, '');
+    return str2ab(atob(b64Lines));
+}
 
-window.onload = function() {
-  document.getElementById('st-promise').innerHTML = typeof Promise;
-  document.getElementById('st-blob').innerHTML = typeof Blob;
-  var bb = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
-  document.getElementById('st-builder').innerHTML = typeof bb;
-  try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); document.getElementById('st-storage').innerHTML='OK'; } catch(e) { document.getElementById('st-storage').innerHTML='LOCKED'; }
+function fetchServiceToken(callback) {
+    if (accessToken && Date.now() < tokenExpiry - (5 * 60 * 1000)) { if (callback) callback(); return; }
+    if (!SERVICE_ACCOUNT_EMAIL || SERVICE_ACCOUNT_EMAIL.indexOf('YOUR_') !== -1) { alert("Please configure Service Account credentials in the HTML file."); return; }
+
+    var header = { "alg": "RS256", "typ": "JWT" };
+    var now = Math.floor(Date.now() / 1000);
+    var payload = {
+        "iss": SERVICE_ACCOUNT_EMAIL,
+        "scope": "https://www.googleapis.com/auth/drive.readonly",
+        "aud": "https://oauth2.googleapis.com/token",
+        "exp": now + 3600,
+        "iat": now
+    };
+
+    var unsignedToken = b64u(JSON.stringify(header)) + "." + b64u(JSON.stringify(payload));
+    var cryptoObj = window.crypto && (window.crypto.subtle || window.crypto.webkitSubtle);
+    
+    if (!cryptoObj) { alert("WebCrypto API is not supported in this browser."); return; }
+
+    cryptoObj.importKey(
+        'pkcs8', pem2ab(SERVICE_ACCOUNT_PRIVATE_KEY),
+        { name: 'RSASSA-PKCS1-v1_5', hash: { name: 'SHA-256' } },
+        false, ['sign']
+    ).then(function(privateKey) {
+        return cryptoObj.sign({ name: 'RSASSA-PKCS1-v1_5' }, privateKey, str2ab(unsignedToken));
+    }).then(function(signature) {
+        var jwt = unsignedToken + "." + ab2b64u(signature);
+        xhr({
+            url: 'https://oauth2.googleapis.com/token',
+            method: 'POST',
+            body: 'grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=' + jwt,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            json: true,
+            success: function(res) {
+                if (res.access_token) {
+                    accessToken = res.access_token;
+                    tokenExpiry = Date.now() + (res.expires_in * 1000);
+                    if (callback) callback();
+                } else { alert("Auth error: " + JSON.stringify(res)); }
+            },
+            error: function(err) { alert("Token Exchange Failed: " + err); }
+        });
+    }).catch(function(err) { alert("WebCrypto signing error: " + err); });
+}
+
+function apiRequest(opt) {
+    fetchServiceToken(function() {
+        if (!opt.headers) opt.headers = {};
+        opt.headers.Authorization = 'Bearer ' + accessToken;
+        xhr(opt);
+    });
+}
+
+function xhr(opt) {
+  var x = new XMLHttpRequest();
+  x.open(opt.method || 'GET', opt.url);
+  if (opt.headers) { for (var h in opt.headers) x.setRequestHeader(h, opt.headers[h]); }
+  if (opt.responseType) x.responseType = opt.responseType;
+  x.onreadystatechange = function() {
+    if (x.readyState === 4) {
+      if (x.status >= 200 && x.status < 300) {
+        var res = x.response;
+        if (opt.json && typeof res === 'string') res = JSON.parse(res);
+        if (opt.success) opt.success(res);
+      } else { if (opt.error) opt.error(x.status); }
+    }
+  };
+  x.send(opt.body);
+}
+
+function unlockApp() {
+    var p = document.getElementById('pin-input').value;
+    if (p === APP_PIN) {
+        document.getElementById('pin-container').style.display = 'none';
+        document.getElementById('auth-loading').style.display = 'block';
+        fetchServiceToken(function() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            loadLibrary(true);
+        });
+    } else {
+        alert("Incorrect PIN");
+        document.getElementById('pin-input').value = '';
+    }
+}
+
+function loadLibrary(force) {
+  var loading = document.getElementById('loading');
+  if (allBooks.length > 0 && !force) { return; }
+  loading.style.display='block';
+  apiRequest({
+    url: 'https://www.googleapis.com/drive/v3/files?q=name%3D%27' + encodeURIComponent(FOLDER_NAME) + '%27%20and%20mimeType%3D%27application%2Fvnd.google-apps.folder%27%20and%20trashed%3Dfalse&fields=files(id,name)',
+    json: true,
+    success: function(data) {
+      if (!data.files || !data.files[0]) { loading.style.display='none'; return; }
+      recursiveScan(data.files[0].id, 0, function(files) {
+        var nb = [];
+        for (var i=0; i<files.length; i++) {
+            var f = files[i];
+            var parts = f.name.replace(/\.(epub|pdf)$/i, '').split(' - ');
+            nb.push({ id: f.id, title: parts[0]||'Untitled', author: parts[1]||'Unknown', format: f.name.split('.').pop().toLowerCase(), coverId: f.coverId });
+        }
+        nb.sort(function(a,b){ return a.title.localeCompare(b.title); });
+        allBooks = nb; renderBooks(nb); loading.style.display='none';
+      });
+    },
+    error: function() { loading.style.display='none'; }
+  });
+}
+
+function recursiveScan(fid, depth, callback) {
+  if (depth > 6) { callback([]); return; }
+  apiRequest({
+    url: 'https://www.googleapis.com/drive/v3/files?q=%27' + fid + '%27%20in%20parents%20and%20trashed%3Dfalse&fields=files(id,name,mimeType)&pageSize=1000',
+    json: true,
+    success: function(data) {
+      var items = data.files || [];
+      var books = []; var folders = []; var coverId = null;
+      for (var i=0; i<items.length; i++) {
+          if (items[i].name && items[i].name.toLowerCase() === 'cover.jpg') coverId = items[i].id;
+          else if (items[i].name && (items[i].name.toLowerCase().indexOf('.epub') !== -1 || items[i].name.toLowerCase().indexOf('.pdf') !== -1)) books.push(items[i]);
+          else if (items[i].mimeType === 'application/vnd.google-apps.folder') folders.push(items[i]);
+      }
+      for (var j=0; j<books.length; j++) books[j].coverId = coverId;
+      if (folders.length === 0) { callback(books); return; }
+      var results = books; var count = 0;
+      for (var k=0; k<folders.length; k++) {
+          recursiveScan(folders[k].id, depth + 1, function(subFiles) { results = results.concat(subFiles); count++; if (count === folders.length) callback(results); });
+      }
+    }
+  });
+}
+
+function renderBooks(books) {
+  var l = document.getElementById('book-list');
+  document.getElementById('book-count').innerHTML = books.length + ' books';
+  if (!books.length) { l.innerHTML = '<div style="padding:4rem; text-align:center; color:var(--muted)">Empty. Search or ⟲.</div>'; return; }
+  var html = '';
+  for (var i=0; i<books.length; i++) {
+      var b = books[i];
+      html += '<div class="book-card" onclick="openBook(\''+b.id+'\', \''+esc(b.title)+'\', \''+b.format+'\')">' +
+              '<div class="book-cover">' + (b.coverId ? '<img src="https://drive.google.com/thumbnail?id='+b.coverId+'&sz=w300">' : '<div style="padding:1.5rem; text-align:center; height:100%; color:var(--muted); font-size:11px;"><div>'+esc(b.title)+'</div></div>') +
+              '<div class="format-badge" style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.8); padding:2px 5px; font-size:9px;">'+b.format+'</div></div>' +
+              '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></div>';
+  }
+  l.innerHTML = html;
+}
+
+function esc(s) { return (s||'').split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;'); }
+
+function openBook(id, title, format) {
+  document.getElementById('reader-title').innerHTML = title;
+  document.getElementById('reader-overlay').style.display = 'block';
+  if (format === 'pdf') {
+      document.getElementById('pdf-frame').src = 'https://drive.google.com/file/d/' + id + '/preview';
+      document.getElementById('pdf-frame').style.display = 'block';
+      document.getElementById('epub-content-area').style.display = 'none';
+      return;
+  }
+  var container = document.getElementById('epub-container'), area = document.getElementById('epub-content-area');
+  area.style.display = 'block'; document.getElementById('pdf-frame').style.display = 'none';
+  container.innerHTML = '<div style="text-align:center; padding:2rem">Extracting...</div>'; area.scrollTop = 0;
   
-  if (window.config.clientId) {
-      document.getElementById('st-clientid').innerHTML = window.config.clientId.substring(0, 8) + '...';
-      document.getElementById('cfg-client-id').value = window.config.clientId;
-  }
-  if (window.config.folderName) document.getElementById('cfg-folder').value = window.config.folderName;
-
-  var hash = window.location.hash;
-  if (hash.indexOf('access_token') !== -1) {
-    var token = hash.split('access_token=')[1].split('&')[0];
-    window.accessToken = token;
-    window.safeStorage.set('library_token', token);
-    window.location.hash = ''; showApp(); loadLibrary();
-  }
-};
-
-function saveConfig() {
-  alert('Trace: saveConfig start');
-  var id = document.getElementById('cfg-client-id').value.toString().replace(/\s/g, '');
-  var f = document.getElementById('cfg-folder').value.toString();
-  alert('Trace: ID read [' + id.substring(0, 4) + ']');
-  window.config.clientId = id;
-  window.config.folderName = f;
-  window.safeStorage.set(window.CONFIG_KEY, JSON.stringify(window.config));
-  document.getElementById('st-clientid').innerHTML = id.substring(0, 8) + '...';
-  alert('Trace: window.config updated');
+  apiRequest({
+    url: 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media',
+    responseType: 'arraybuffer',
+    success: function(buf) {
+      JSZip.loadAsync(buf).then(function(zip) {
+        currentZip = zip;
+        zip.file("META-INF/container.xml").async("text").then(function(cXml) {
+          var m = cXml.match(/full-path="([^"]+)"/);
+          var opfPath = m[1], opfDir = opfPath.indexOf('/') !== -1 ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+          zip.file(opfPath).async("text").then(function(opfText) {
+            var opfDoc = new DOMParser().parseFromString(opfText, "text/xml");
+            var manifest = {}; var items = opfDoc.querySelectorAll('item');
+            for (var i=0; i<items.length; i++) manifest[items[i].getAttribute('id')] = { href: items[i].getAttribute('href') };
+            var refs = opfDoc.querySelectorAll('itemref');
+            currentSpine = []; for (var j=0; j<refs.length; j++) currentSpine.push({ fullPath: opfDir + manifest[refs[j].getAttribute('idref')].href });
+            container.innerHTML = '';
+            for (var n=0; n<currentSpine.length; n++) {
+                var d = document.createElement('div'); d.className='epub-chapter'; d.id='chapter-'+n;
+                d.innerHTML = '<div style="height:200px"></div>';
+                container.appendChild(d);
+            }
+            loadAllChapters();
+          });
+        });
+      });
+    }
+  });
 }
 
-function injectTestId() {
-  alert('Trace: Injecting TEST_ID');
-  document.getElementById('cfg-client-id').value = 'TEST_ID_1234567890';
-  saveConfig();
+function loadAllChapters() { for (var i=0; i<currentSpine.length; i++) loadChapter(i); }
+
+function loadChapter(idx) {
+  var item = currentSpine[idx], div = document.getElementById('chapter-'+idx);
+  currentZip.file(item.fullPath).async("text").then(function(html) {
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    div.innerHTML = doc.body.innerHTML;
+  });
 }
 
-function startAuth() {
-  alert('Trace: startAuth');
-  if (!window.config.clientId || window.config.clientId === 'NONE') {
-      alert('Trace: Client ID empty in memory'); return;
+function trackProgress() {
+  var area = document.getElementById('epub-content-area');
+  var chapters = document.getElementsByClassName('epub-chapter');
+  var found = 0;
+  for (var i=0; i<chapters.length; i++) { if (chapters[i].offsetTop <= area.scrollTop + 60) found = i; }
+  document.getElementById('reader-progress').innerHTML = 'Ch ' + (found + 1) + '/' + currentSpine.length;
+}
+
+function changeFontSize(d) { readerFontSize = Math.max(12, Math.min(30, readerFontSize+d)); document.getElementById('epub-container').style.fontSize = readerFontSize+'px'; }
+function closeReader() { document.getElementById('reader-overlay').style.display='none'; currentZip=null; }
+
+function setFilter(t, b) { 
+  activeFilter = t; 
+  var btns = document.getElementsByClassName('filter-btn');
+  for (var i=0; i<btns.length; i++) btns[i].className = 'filter-btn';
+  b.className = 'filter-btn active'; 
+  applyFilters(); 
+}
+function applyFilters() {
+  var q = document.getElementById('search').value.toLowerCase();
+  var f = [];
+  for (var i=0; i<allBooks.length; i++) {
+      var b = allBooks[i];
+      var mType = (activeFilter === 'all' || b.format === activeFilter);
+      var mSearch = (!q || b.title.toLowerCase().indexOf(q) !== -1 || b.author.toLowerCase().indexOf(q) !== -1);
+      if (mType && mSearch) f.push(b);
   }
-  var base = window.location.origin + window.location.pathname;
-  var url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(window.config.clientId) + '&redirect_uri=' + encodeURIComponent(base) + '&response_type=token&scope=https://www.googleapis.com/auth/drive.readonly';
-  alert('Trace: Redirecting...');
-  window.location.href = url;
+  renderBooks(f);
 }
-
-function showApp() { document.getElementById('auth-screen').style.display='none'; document.getElementById('app').style.display='block'; }
-function signOut() { window.safeStorage.remove('library_token'); location.reload(); }
-
-function loadLibrary() { alert('Loading Library...'); }
-function closeReader() { document.getElementById('reader-overlay').style.display='none'; }
 </script>
 </body>
 </html>
