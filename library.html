@@ -693,7 +693,7 @@ async function getFilesInFolder(folderId) {
   do {
     let url = `https://www.googleapis.com/drive/v3/files?` +
       `q=${encodeURIComponent(`'${folderId}' in parents and trashed=false`)}` +
-      `&fields=nextPageToken,files(id,name,mimeType,parents,thumbnailLink)` +
+      `&fields=nextPageToken,files(id,name,mimeType,parents)` +
       `&pageSize=1000`;
     if (pageToken) url += `&pageToken=${pageToken}`;
     const data = await driveRequest(url);
@@ -706,13 +706,22 @@ async function getFilesInFolder(folderId) {
 async function recursiveScan(folderId, depth = 0) {
   if (depth > 4) return [];
   const items = await getFilesInFolder(folderId);
+  
+  // Find cover.jpg in this folder
+  const coverFile = items.find(f => f.name.toLowerCase() === 'cover.jpg');
+  const coverId = coverFile ? coverFile.id : null;
+
   let books = [];
   const subfolders = items.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
   const files = items.filter(f => {
     const n = f.name.toLowerCase();
     return n.endsWith('.epub') || n.endsWith('.pdf');
   });
-  books = books.concat(files);
+
+  // Attach coverId to each book file
+  const bookFiles = files.map(f => ({ ...f, coverId }));
+  books = books.concat(bookFiles);
+
   for (const folder of subfolders) {
     const sub = await recursiveScan(folder.id, depth + 1);
     books = books.concat(sub);
@@ -772,7 +781,7 @@ async function loadLibrary() {
         title: meta.title,
         author: meta.author,
         format: ext,
-        thumbnailLink: f.thumbnailLink || null,
+        coverId: f.coverId || null,
       };
     });
 
@@ -808,9 +817,9 @@ function renderBooks(books) {
   }
 
   list.innerHTML = books.map(b => {
-    // Build cover: thumbnail image if available, otherwise text placeholder
-    const coverInner = b.thumbnailLink
-      ? `<img src="${escAttr(b.thumbnailLink)}?access_token=${encodeURIComponent(accessToken)}"
+    // Build cover: sibling cover.jpg thumbnail if available, otherwise text placeholder
+    const coverInner = b.coverId
+      ? `<img src="https://drive.google.com/thumbnail?id=${b.coverId}&sz=w200"
               alt="${escAttr(b.title)}"
               loading="lazy"
               onerror="this.parentNode.innerHTML='<div class=\\'book-cover-placeholder\\'><div class=\\'cover-title\\'>${escHtmlForAttr(b.title)}</div><div class=\\'cover-author\\'>${escHtmlForAttr(b.author)}</div></div><span class=\\'format-badge ${b.format}\\'>${b.format.toUpperCase()}</span>'">`
