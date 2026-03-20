@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
 <title>LIBRARY</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -15,7 +16,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-height: 100vh; overflow-x: hidden; }
 
-  #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+  #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 2rem; }
   .auth-title { font-family: 'Playfair Display', serif; font-size: clamp(3rem, 10vw, 6rem); font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
   .auth-subtitle { color: var(--muted); font-size: 11px; text-transform: uppercase; margin-bottom: 3rem; letter-spacing: 0.3em; }
 
@@ -141,7 +142,7 @@
     <label class="field-label">Drive Folder Name</label>
     <input class="field-input" id="cfg-folder">
     <div style="display:flex; gap:1rem;">
-      <button class="btn-p" onclick="saveConfig()">Save & Connect</button>
+      <button class="btn-p" onclick="saveConfig()">Save Settings</button>
       <button class="ctrl-btn" style="margin-top:1.5rem" onclick="hideConfig()">Cancel</button>
     </div>
   </div>
@@ -186,7 +187,7 @@ function checkToken(p=true) {
 
 function startAuth() {
   if (!config.clientId) { showConfig(); return; }
-  document.getElementById('sign-in-btn').textContent = 'Connecting...';
+  // iOS Safari requirement: Direct synchronous redirect
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(config.clientId)}&redirect_uri=${encodeURIComponent(window.location.origin + window.location.pathname)}&response_type=token&scope=https://www.googleapis.com/auth/drive.readonly`;
 }
 
@@ -302,17 +303,11 @@ async function openBook(id, title, format) {
 }
 
 function findFileInZip(zip, path) {
-  // 1. Exact
   let zf = zip.file(path); if (zf) return { file: zf, path: path, method: 'exact' };
-  // 2. Case-insensitive
   const lp = path.toLowerCase();
   for (const n in zip.files) { if (n.toLowerCase() === lp) return { file: zip.files[n], path: n, method: 'case' }; }
-  // 3. Basename (Deep)
   const bn = path.split('/').pop().toLowerCase();
-  for (const n in zip.files) { 
-    const ln = n.toLowerCase();
-    if (ln.endsWith('/' + bn) || ln === bn) return { file: zip.files[n], path: n, method: 'deep' };
-  }
+  for (const n in zip.files) { if (n.toLowerCase().endsWith('/' + bn) || n.toLowerCase() === bn) return { file: zip.files[n], path: n, method: 'deep' }; }
   return null;
 }
 
@@ -331,7 +326,6 @@ async function loadAllChapters() {
             const cleanSrc = decodeURIComponent(src).split('#')[0].split('?')[0];
             const relPath = resolvePath(dir, cleanSrc);
             const res = findFileInZip(currentZip, relPath) || findFileInZip(currentZip, cleanSrc);
-            
             if (res) {
               const url = URL.createObjectURL(await res.file.async("blob")); blobUrls.push(url);
               if (res.method !== 'exact') log(`Recovered asset: ${cleanSrc} via ${res.method}`, "success");
@@ -381,7 +375,7 @@ function saveConfig() {
   config.clientId = document.getElementById('cfg-client-id').value.trim();
   config.folderName = document.getElementById('cfg-folder').value.trim();
   localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); hideConfig();
-  if (!accessToken) startAuth(); else loadLibrary(true);
+  if (accessToken) loadLibrary(true);
 }
 function setFilter(t, b) { activeFilter = t; document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); applyFilters(); }
 function filterBooks() { applyFilters(); }
