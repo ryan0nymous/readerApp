@@ -16,55 +16,40 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-height: 100vh; overflow-x: hidden; }
 
-  #auth-screen { display: block; min-height: 100vh; text-align: center; padding-top: 15vh; }
-  .auth-title { font-family: 'Playfair Display', serif; font-size: 60px; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
-  .auth-subtitle { color: var(--muted); font-size: 11px; text-transform: uppercase; margin-bottom: 3rem; letter-spacing: 0.3em; }
+  #auth-screen { display: block; min-height: 100vh; text-align: center; padding: 10vh 2rem 5vh; }
+  .auth-title { font-family: 'Playfair Display', serif; font-size: 50px; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
+  .auth-subtitle { color: var(--muted); font-size: 10px; text-transform: uppercase; margin-bottom: 2rem; letter-spacing: 0.3em; }
 
+  /* ── DIRECT CONFIG ── */
+  #direct-config { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; max-width: 360px; margin: 0 auto 2rem; text-align: left; border-radius: 8px; }
+  .field-label { display: block; color: var(--muted); font-size: 9px; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 1px; }
+  .field-input { width: 100%; background: #000; border: 1px solid var(--border); color: var(--text); padding: 0.7rem; margin-bottom: 1rem; border-radius: 4px; font-family: inherit; font-size: 13px; }
+  
   #app { display: none; min-height: 100vh; }
   header { display: block; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); position: relative; background: var(--bg); z-index: 100; overflow: hidden; }
   .logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); letter-spacing: 0.2em; float: left; }
-  #search { float: right; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 0.8rem; width: 220px; outline: none; }
-
-  .filter-bar { display: block; padding: 0.7rem 1.5rem; border-bottom: 1px solid var(--border); clear: both; overflow: hidden; }
-  .filter-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 10px; padding: 0.3rem 0.8rem; cursor: pointer; text-transform: uppercase; margin-right: 0.5rem; float: left; }
-  .filter-btn.active { color: var(--accent); border-color: var(--accent); }
+  #search { float: right; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 0.8rem; width: 200px; outline: none; }
 
   #book-list { padding: 1.5rem; display: block; font-size: 0; }
-  .book-card { display: inline-block; width: 160px; background: var(--surface); border: 1px solid var(--border); cursor: pointer; margin-right: 1.5rem; margin-bottom: 1.5rem; vertical-align: top; font-size: 13px; }
-  .book-cover { width: 100%; height: 240px; background: var(--bg); position: relative; overflow: hidden; }
+  .book-card { display: inline-block; width: 150px; background: var(--surface); border: 1px solid var(--border); cursor: pointer; margin-right: 1.5rem; margin-bottom: 1.5rem; vertical-align: top; font-size: 13px; }
+  .book-cover { width: 100%; height: 220px; background: var(--bg); position: relative; overflow: hidden; }
   .book-cover img { width: 100%; height: 100%; display: block; border: 0; }
   .book-info { padding: 0.8rem; }
-  .book-title { font-family: 'Playfair Display', serif; font-size: 12px; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .book-author { color: var(--muted); font-size: 10px; }
+  .book-title { font-family: 'Playfair Display', serif; font-size: 11px; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .book-author { color: var(--muted); font-size: 9px; }
 
   /* ── READER ── */
   #reader-overlay { display: none; position: fixed; inset: 0; background: var(--reader-bg); z-index: 1000; overflow: hidden; }
-  .reader-header { position: absolute; top: 0; left: 0; right: 0; height: 50px; display: block; padding: 0.7rem 1.5rem; background: #ede8e0; border-bottom: 1px solid #d4cdc0; z-index: 1002; overflow: hidden; }
-  .reader-title { font-family: 'Playfair Display', serif; font-size: 13px; color: var(--reader-text); float: left; margin-left: 1rem; margin-top: 5px; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .reader-controls { float: right; }
-  .reader-progress { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #6b6358; text-transform: uppercase; margin-right: 1rem; vertical-align: middle; }
-  .ctrl-btn { background: #fdfcf9; border: 1px solid #c4bdb0; color: #4a443a; font-size: 11px; padding: 0.3rem 0.8rem; cursor: pointer; display: inline-block; text-decoration: none; text-align: center; border-radius: 4px; }
-
   #epub-content-area { position: absolute; top: 50px; bottom: 0; left: 0; right: 0; overflow-y: auto; background: var(--reader-bg); -webkit-overflow-scrolling: touch; }
   #epub-container { max-width: 680px; margin: 0 auto; padding: 2rem 1.5rem 4rem; color: var(--reader-text); font-family: 'PT Serif', serif; font-size: 17px; line-height: 1.8; }
   
   /* ── DEBUG & DIAGNOSTICS ── */
-  #diag-panel { margin: 2rem auto; max-width: 340px; text-align: left; background: #1a1814; border: 1px solid #332d24; padding: 1rem; color: #887e6a; font-family: monospace; font-size: 9px; }
+  #diag-panel { margin: 2rem auto; max-width: 360px; text-align: left; background: #1a1814; border: 1px solid #332d24; padding: 1rem; color: #887e6a; font-family: monospace; font-size: 9px; }
   .diag-item { border-bottom: 1px solid #28241d; padding: 4px 0; overflow: hidden; }
   .diag-item span { float: right; color: var(--accent); }
-  #error-monitor { color: #ff6b6b; font-size: 11px; text-align: left; padding: 1rem; border: 1px dashed #ff6b6b; display: none; margin: 1rem 2rem; border-radius: 4px; }
-  #private-warning { display: none; background: #441a1a; color: #ff9999; border: 1px solid #ff4444; padding: 0.8rem; margin: 1rem auto; max-width: 340px; font-size: 11px; border-radius: 4px; }
-
-  /* ── MODALS ── */
-  #config-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; text-align: center; padding-top: 15vh; }
-  .modal-box { background: var(--surface); border: 1px solid var(--border); padding: 2rem; width: 400px; display: inline-block; text-align: left; border-radius: 8px; }
-  .field-label { display: block; color: var(--muted); font-size: 10px; margin-bottom: 0.5rem; text-transform: uppercase; }
-  .field-input { width: 100%; background: #000; border: 1px solid var(--border); color: var(--text); padding: 0.8rem; margin-bottom: 1.5rem; border-radius: 4px; font-family: inherit; font-size: 14px; }
-  .btn-p { background: var(--accent); color: var(--bg); border: none; padding: 0.8rem 1.5rem; cursor: pointer; font-weight: bold; margin-top: 0.5rem; border-radius: 4px; }
-
-  #loading { display: none; text-align: center; padding: 4rem; }
-  .spinner { display: inline-block; width: 30px; height: 30px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; -webkit-animation: spin 0.8s linear infinite; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  #error-monitor { color: #ff6b6b; font-size: 10px; text-align: left; padding: 1rem; border: 1px dashed #ff6b6b; display: none; margin: 1rem auto; max-width: 360px; }
+  .ctrl-btn { background: #fdfcf9; border: 1px solid #c4bdb0; color: #4a443a; font-size: 11px; padding: 0.5rem 1rem; cursor: pointer; display: inline-block; text-decoration: none; border-radius: 4px; font-weight: bold; }
+  .btn-accent { background: var(--accent) !important; color: var(--bg) !important; border: none !important; }
 </style>
 <script>
 window.onerror = function(msg, url, line) {
@@ -75,357 +60,132 @@ window.onerror = function(msg, url, line) {
 </head>
 <body>
 
-<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-title">LIBRARY</div>
   <div class="auth-subtitle">Personal ePub Collection</div>
   
-  <div style="margin-bottom: 2rem;">
-    <button class="ctrl-btn" style="padding: 1.2rem 4rem; font-size: 18px; background: var(--accent); color: var(--bg); border: none; font-weight: bold;" onclick="startAuth()">Sign in with Google</button>
+  <!-- DIRECT INPUT -->
+  <div id="direct-config">
+    <label class="field-label">OAuth Client ID</label>
+    <input class="field-input" id="cfg-client-id" placeholder="Paste Client ID...">
+    <label class="field-label">Drive Folder</label>
+    <input class="field-input" id="cfg-folder" value="CalibreLibrary">
+    <div style="text-align: right;">
+        <button class="ctrl-btn btn-accent" onclick="saveConfig()">Save Settings</button>
+    </div>
   </div>
 
-  <div style="color: var(--muted); font-size: 11px;">
-    <a href="javascript:showConfig()" style="color:var(--accent); text-decoration: none;">Settings</a>
+  <div style="margin-bottom: 1.5rem;">
+    <button class="ctrl-btn btn-accent" style="padding: 1.2rem 4rem; font-size: 18px;" onclick="startAuth()">Sign in with Google</button>
+  </div>
+
+  <div style="color: var(--muted); font-size: 10px;">
+    <a href="javascript:alert('Interactivity Check: OK')" style="color:#888; text-decoration: none;">Touch Test</a>
     <span style="margin: 0 1rem;">|</span>
-    <a href="javascript:alert('Touch Interactivity: OK')" style="color:#888; text-decoration: none;">Touch Test</a>
-  </div>
-
-  <div id="private-warning">
-    <b>REQUIRED: Disable Private Browsing</b><br>
-    Settings cannot be saved while your iPad is in Private mode. Please open a normal tab to continue.
+    <a href="javascript:injectTestId()" style="color:var(--accent-red); text-decoration: none;">Inject Test ID</a>
   </div>
 
   <div id="error-monitor"></div>
 
   <div id="diag-panel">
-    <div style="font-weight: bold; color: #b5a687; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #332d24; padding-bottom: 5px;">Storage & Environment Scan</div>
+    <div style="font-weight: bold; color: #b5a687; margin-bottom: 10px; text-transform: uppercase;">Detailed Bypass Scan</div>
     <div class="diag-item">typeof Promise <span id="st-promise">...</span></div>
     <div class="diag-item">typeof Blob <span id="st-blob">...</span></div>
-    <div class="diag-item">JSZip Library <span id="st-jszip">...</span></div>
+    <div class="diag-item">BlobBuilder <span id="st-builder">...</span></div>
     <div class="diag-item">LocalStorage <span id="st-storage">...</span></div>
     <div class="diag-item">Active Client ID <span id="st-clientid" style="color:#fff">NONE</span></div>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <header>
     <div class="logo">LIBRARY</div>
     <input type="search" id="search" placeholder="search..." oninput="filterBooks()">
-    <button class="ctrl-btn" style="border:none; color:var(--muted); float:right; margin-right:1rem; margin-top:5px;" onclick="signOut()">Sign out</button>
+    <button class="ctrl-btn" style="border:none; color:var(--muted); float:right;" onclick="signOut()">Sign out</button>
   </header>
-  <div class="filter-bar">
-    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
-    <button class="filter-btn" onclick="setFilter('epub', this)">ePub</button>
-    <button class="filter-btn" onclick="setFilter('pdf', this)">PDF</button>
-    <button class="ctrl-btn" style="float:right; border:none; opacity:0.6" onclick="loadLibrary(true)">⟲</button>
-    <span style="color:var(--muted); font-size:10px; float:right; margin-right: 1.5rem; margin-top:5px;" id="book-count"></span>
-  </div>
-  <div id="loading"><div class="spinner"></div><div style="margin-top:10px">Loading...</div></div>
+  <div id="loading" style="text-align:center; padding:2rem;"><div class="spinner"></div></div>
   <div id="book-list"></div>
 </div>
 
-<!-- READER -->
 <div id="reader-overlay">
-  <div class="reader-header">
-    <button class="ctrl-btn" onclick="toggleTOC(true)">☰</button>
-    <div class="reader-title" id="reader-title"></div>
-    <div class="reader-controls">
-      <span class="reader-progress" id="reader-progress"></span>
-      <button class="ctrl-btn" onclick="changeFontSize(-1)">A-</button>
-      <button class="ctrl-btn" onclick="changeFontSize(1)">A+</button>
-      <button class="ctrl-btn" onclick="closeReader()">✕</button>
-    </div>
+  <div style="height:50px; background:#ede8e0; border-bottom:1px solid #d4cdc0; padding:10px;">
+     <button class="ctrl-btn" onclick="closeReader()">✕ Close</button>
+     <span id="reader-title" style="margin-left:1rem; font-family:'Playfair Display'; font-size:13px;"></span>
   </div>
-  <div id="epub-content-area" onscroll="trackProgress()"><div id="epub-container"></div></div>
-  <iframe id="pdf-frame" style="display:none; width:100%; height:100%; border:none"></iframe>
-</div>
-
-<!-- TOC -->
-<div id="toc-overlay" onclick="toggleTOC(false)"></div>
-<div id="toc-drawer">
-  <div class="toc-header">Contents</div>
-  <div id="toc-list"></div>
-</div>
-
-<!-- MODALS -->
-<div id="config-modal">
-  <div class="modal-box">
-    <div style="font-family:'Playfair Display'; color:var(--accent); font-size: 1.2rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Configuration</div>
-    <label class="field-label">OAuth Client ID</label>
-    <input class="field-input" id="cfg-client-id" placeholder="Paste Client ID here...">
-    <label class="field-label">Drive Folder Name</label>
-    <input class="field-input" id="cfg-folder" value="CalibreLibrary">
-    <div style="margin-top:20px; text-align: right;">
-      <button class="ctrl-btn" style="margin-right:10px" onclick="hideConfig()">Cancel</button>
-      <button class="btn-p" onclick="saveConfig()">Save Settings</button>
-    </div>
-  </div>
+  <div id="epub-content-area"><div id="epub-container"></div></div>
 </div>
 
 <script>
-// Polyfill origin for iOS 9
-if (!window.location.origin) {
-  window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
-}
+// Polyfill origin 
+if (!window.location.origin) window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
 
-// STORAGE WRAPPER
-var safeStorage = {
+// Global persistence object
+window.safeStorage = {
   data: {},
   get: function(k) { try { return localStorage.getItem(k); } catch(e) { return this.data[k] || null; } },
   set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) { this.data[k] = v; } },
   remove: function(k) { try { localStorage.removeItem(k); } catch(e) { delete this.data[k]; } }
 };
 
-var CONFIG_KEY = 'library_config', CACHE_KEY = 'library_cache', TOKEN_KEY = 'library_token', TOKEN_TIME_KEY = 'library_token_time';
-var config = JSON.parse(safeStorage.get(CONFIG_KEY) || '{}');
-var allBooks = [], activeFilter = 'all', accessToken = safeStorage.get(TOKEN_KEY);
-var currentZip = null, currentSpine = [], currentTOC = [], blobUrls = [], readerFontSize = 17;
+window.CONFIG_KEY = 'library_config';
+window.config = JSON.parse(window.safeStorage.get(window.CONFIG_KEY) || '{}');
 
 window.onload = function() {
-  // Update UI Diagnostics
   document.getElementById('st-promise').innerHTML = typeof Promise;
   document.getElementById('st-blob').innerHTML = typeof Blob;
-  document.getElementById('st-jszip').innerHTML = typeof JSZip;
-  try { 
-      localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); 
-      document.getElementById('st-storage').innerHTML = 'OK';
-  } catch(e) { 
-      document.getElementById('st-storage').innerHTML = 'LOCKED (Private)'; 
-      document.getElementById('private-warning').style.display = 'block';
-  }
+  var bb = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
+  document.getElementById('st-builder').innerHTML = typeof bb;
+  try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); document.getElementById('st-storage').innerHTML='OK'; } catch(e) { document.getElementById('st-storage').innerHTML='LOCKED'; }
   
-  if (config.clientId) {
-      document.getElementById('st-clientid').innerHTML = config.clientId.substring(0, 8) + '...';
+  if (window.config.clientId) {
+      document.getElementById('st-clientid').innerHTML = window.config.clientId.substring(0, 8) + '...';
+      document.getElementById('cfg-client-id').value = window.config.clientId;
   }
+  if (window.config.folderName) document.getElementById('cfg-folder').value = window.config.folderName;
 
-  // Auth Flow
-  if (window.location.hash.indexOf('access_token') !== -1) {
-    var pairs = window.location.hash.substring(1).split('&');
-    for (var i = 0; i < pairs.length; i++) {
-        var p = pairs[i].split('=');
-        if (p[0] === 'access_token') { accessToken = p[1]; safeStorage.set(TOKEN_KEY, accessToken); safeStorage.set(TOKEN_TIME_KEY, Date.now().toString()); break; }
-    }
+  var hash = window.location.hash;
+  if (hash.indexOf('access_token') !== -1) {
+    var token = hash.split('access_token=')[1].split('&')[0];
+    window.accessToken = token;
+    window.safeStorage.set('library_token', token);
     window.location.hash = ''; showApp(); loadLibrary();
-  } else if (accessToken && checkToken(false)) { showApp(); loadLibrary(); }
+  }
 };
 
-function checkToken(p) {
-  var t = safeStorage.get(TOKEN_TIME_KEY); if (!t) return false;
-  if (Date.now() - parseInt(t) > 55*60*1000) { if (p) startAuth(); return false; }
-  return true;
+function saveConfig() {
+  alert('Trace: saveConfig start');
+  var id = document.getElementById('cfg-client-id').value.toString().replace(/\s/g, '');
+  var f = document.getElementById('cfg-folder').value.toString();
+  alert('Trace: ID read [' + id.substring(0, 4) + ']');
+  window.config.clientId = id;
+  window.config.folderName = f;
+  window.safeStorage.set(window.CONFIG_KEY, JSON.stringify(window.config));
+  document.getElementById('st-clientid').innerHTML = id.substring(0, 8) + '...';
+  alert('Trace: window.config updated');
+}
+
+function injectTestId() {
+  alert('Trace: Injecting TEST_ID');
+  document.getElementById('cfg-client-id').value = 'TEST_ID_1234567890';
+  saveConfig();
 }
 
 function startAuth() {
-  alert('Trace: startAuth called');
-  if (!config.clientId) { alert('Trace: Client ID empty in memory'); showConfig(); return; }
+  alert('Trace: startAuth');
+  if (!window.config.clientId || window.config.clientId === 'NONE') {
+      alert('Trace: Client ID empty in memory'); return;
+  }
   var base = window.location.origin + window.location.pathname;
-  alert('Trace: Redirecting to Google...');
-  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(config.clientId) + '&redirect_uri=' + encodeURIComponent(base) + '&response_type=token&scope=https://www.googleapis.com/auth/drive.readonly';
+  var url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(window.config.clientId) + '&redirect_uri=' + encodeURIComponent(base) + '&response_type=token&scope=https://www.googleapis.com/auth/drive.readonly';
+  alert('Trace: Redirecting...');
+  window.location.href = url;
 }
 
-function signOut() { safeStorage.remove(TOKEN_KEY); safeStorage.remove(TOKEN_TIME_KEY); safeStorage.remove(CACHE_KEY); location.reload(); }
-
-function showConfig() { 
-  document.getElementById('cfg-client-id').value = config.clientId || ''; 
-  document.getElementById('cfg-folder').value = config.folderName || 'CalibreLibrary'; 
-  document.getElementById('config-modal').style.display='block'; 
-}
-function hideConfig() { document.getElementById('config-modal').style.display='none'; }
-function saveConfig() {
-  var id = document.getElementById('cfg-client-id').value.toString().replace(/\s/g, '');
-  var f = document.getElementById('cfg-folder').value.toString();
-  alert('Trace: Saving ID [' + id.substring(0, 4) + '...]');
-  config.clientId = id; config.folderName = f;
-  safeStorage.set(CONFIG_KEY, JSON.stringify(config));
-  document.getElementById('st-clientid').innerHTML = id.substring(0, 8) + '...';
-  alert('Trace: Config object updated in memory');
-  hideConfig();
-  if (accessToken) loadLibrary(true);
-}
-
-function xhr(opt) {
-  var x = new XMLHttpRequest();
-  x.open(opt.method || 'GET', opt.url);
-  if (opt.headers) { for (var h in opt.headers) x.setRequestHeader(h, opt.headers[h]); }
-  if (opt.responseType) x.responseType = opt.responseType;
-  x.onreadystatechange = function() {
-    if (x.readyState === 4) {
-      if (x.status >= 200 && x.status < 300) {
-        var res = x.response;
-        if (opt.json && typeof res === 'string') res = JSON.parse(res);
-        if (opt.success) opt.success(res);
-      } else { if (x.status === 401) signOut(); if (opt.error) opt.error(x.status); }
-    }
-  };
-  x.send(opt.body);
-}
-
-function loadLibrary(force) {
-  if (!accessToken) return;
-  var loading = document.getElementById('loading'), cache = safeStorage.get(CACHE_KEY);
-  if (cache) { allBooks = JSON.parse(cache); renderBooks(allBooks); if (force) loading.style.display='block'; } else { loading.style.display='block'; }
-  xhr({
-    url: 'https://www.googleapis.com/drive/v3/files?q=name%3D%27' + encodeURIComponent(config.folderName || 'CalibreLibrary') + '%27%20and%20mimeType%3D%27application%2Fvnd.google-apps.folder%27%20and%20trashed%3Dfalse&fields=files(id,name)',
-    headers: { Authorization: 'Bearer ' + accessToken },
-    json: true,
-    success: function(data) {
-      if (!data.files || !data.files[0]) { loading.style.display='none'; return; }
-      recursiveScan(data.files[0].id, 0, function(files) {
-        var nb = [];
-        for (var i=0; i<files.length; i++) {
-            var f = files[i];
-            var parts = f.name.replace(/\.(epub|pdf)$/i, '').split(' - ');
-            nb.push({ id: f.id, title: parts[0]||'Untitled', author: parts[1]||'Unknown', format: f.name.split('.').pop().toLowerCase(), coverId: f.coverId });
-        }
-        nb.sort(function(a,b){ return a.title.localeCompare(b.title); });
-        allBooks = nb; safeStorage.set(CACHE_KEY, JSON.stringify(nb)); renderBooks(nb); loading.style.display='none';
-      });
-    },
-    error: function() { loading.style.display='none'; }
-  });
-}
-
-function recursiveScan(fid, depth, callback) {
-  if (depth > 6) { callback([]); return; }
-  xhr({
-    url: 'https://www.googleapis.com/drive/v3/files?q=%27' + fid + '%27%20in%20parents%20and%20trashed%3Dfalse&fields=files(id,name,mimeType)&pageSize=1000',
-    headers: { Authorization: 'Bearer ' + accessToken },
-    json: true,
-    success: function(data) {
-      var items = data.files || [];
-      var books = []; var folders = []; var coverId = null;
-      for (var i=0; i<items.length; i++) {
-          if (items[i].name && items[i].name.toLowerCase() === 'cover.jpg') coverId = items[i].id;
-          else if (items[i].name && (items[i].name.toLowerCase().indexOf('.epub') !== -1 || items[i].name.toLowerCase().indexOf('.pdf') !== -1)) books.push(items[i]);
-          else if (items[i].mimeType === 'application/vnd.google-apps.folder') folders.push(items[i]);
-      }
-      for (var j=0; j<books.length; j++) books[j].coverId = coverId;
-      if (folders.length === 0) { callback(books); return; }
-      var results = books; var count = 0;
-      for (var k=0; k<folders.length; k++) {
-          recursiveScan(folders[k].id, depth + 1, function(subFiles) { results = results.concat(subFiles); count++; if (count === folders.length) callback(results); });
-      }
-    }
-  });
-}
-
-function renderBooks(books) {
-  var l = document.getElementById('book-list');
-  document.getElementById('book-count').innerHTML = books.length + ' books';
-  if (!books.length) { l.innerHTML = '<div style="padding:4rem; text-align:center; color:var(--muted)">Empty. Search or ⟲.</div>'; return; }
-  var html = '';
-  for (var i=0; i<books.length; i++) {
-      var b = books[i];
-      html += '<div class="book-card" onclick="openBook(\''+b.id+'\', \''+esc(b.title)+'\', \''+b.format+'\')">' +
-              '<div class="book-cover">' + (b.coverId ? '<img src="https://drive.google.com/thumbnail?id='+b.coverId+'&sz=w300">' : '<div style="padding:1.5rem; text-align:center; height:100%; color:var(--muted); font-size:11px;"><div>'+esc(b.title)+'</div></div>') +
-              '<div class="format-badge">'+b.format+'</div></div>' +
-              '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></div>';
-  }
-  l.innerHTML = html;
-}
-
-function esc(s) { return (s||'').split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;'); }
-
-function openBook(id, title, format) {
-  if (!checkToken()) return;
-  document.getElementById('reader-title').innerHTML = title;
-  document.getElementById('reader-overlay').style.display = 'block';
-  if (format === 'pdf') {
-      document.getElementById('pdf-frame').src = 'https://drive.google.com/file/d/' + id + '/preview';
-      document.getElementById('pdf-frame').style.display = 'block';
-      document.getElementById('epub-content-area').style.display = 'none';
-      return;
-  }
-  var container = document.getElementById('epub-container'), area = document.getElementById('epub-content-area');
-  area.style.display = 'block'; document.getElementById('pdf-frame').style.display = 'none';
-  container.innerHTML = '<div style="text-align:center; padding:2rem">Extracting...</div>'; area.scrollTop = 0;
-  xhr({
-    url: 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media',
-    headers: { Authorization: 'Bearer ' + accessToken },
-    responseType: 'arraybuffer',
-    success: function(buf) {
-      JSZip.loadAsync(buf).then(function(zip) {
-        currentZip = zip;
-        zip.file("META-INF/container.xml").async("text").then(function(cXml) {
-          var m = cXml.match(/full-path="([^"]+)"/);
-          var opfPath = m[1], opfDir = opfPath.indexOf('/') !== -1 ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
-          zip.file(opfPath).async("text").then(function(opfText) {
-            var opfDoc = new DOMParser().parseFromString(opfText, "text/xml");
-            var manifest = {}; var items = opfDoc.querySelectorAll('item');
-            for (var i=0; i<items.length; i++) manifest[items[i].getAttribute('id')] = { href: items[i].getAttribute('href'), props: items[i].getAttribute('properties') || '' };
-            var refs = opfDoc.querySelectorAll('itemref');
-            currentSpine = []; for (var j=0; j<refs.length; j++) currentSpine.push({ fullPath: opfDir + manifest[refs[j].getAttribute('idref')].href });
-            container.innerHTML = '';
-            for (var n=0; n<currentSpine.length; n++) {
-                var d = document.createElement('div'); d.className='epub-chapter'; d.id='chapter-'+n;
-                d.innerHTML = '<div style="height:200px"></div>';
-                container.appendChild(d);
-            }
-            loadAllChapters();
-          });
-        });
-      });
-    }
-  });
-}
-
-function loadAllChapters() { for (var i=0; i<currentSpine.length; i++) loadChapter(i); }
-
-function loadChapter(idx) {
-  var item = currentSpine[idx], div = document.getElementById('chapter-'+idx);
-  currentZip.file(item.fullPath).async("text").then(function(html) {
-    var doc = new DOMParser().parseFromString(html, "text/html");
-    div.innerHTML = doc.body.innerHTML;
-  });
-}
-
-function trackProgress() {
-  var area = document.getElementById('epub-content-area');
-  var chapters = document.getElementsByClassName('epub-chapter');
-  var found = 0;
-  for (var i=0; i<chapters.length; i++) { if (chapters[i].offsetTop <= area.scrollTop + 60) found = i; }
-  document.getElementById('reader-progress').innerHTML = 'Ch ' + (found + 1) + ' of ' + currentSpine.length;
-}
-
-function toggleTOC(show) { 
-  document.getElementById('toc-drawer').className = show ? 'open' : ''; 
-  document.getElementById('toc-overlay').style.display = show ? 'block' : 'none'; 
-}
-function changeFontSize(d) { readerFontSize = Math.max(12, Math.min(30, readerFontSize+d)); document.getElementById('epub-container').style.fontSize = readerFontSize+'px'; }
-function closeReader() { 
-  document.getElementById('reader-overlay').style.display='none'; blobUrls=[]; currentZip=null; 
-}
 function showApp() { document.getElementById('auth-screen').style.display='none'; document.getElementById('app').style.display='block'; }
-function saveConfig() {
-  var id = document.getElementById('cfg-client-id').value.toString().replace(/\s/g, '');
-  var f = document.getElementById('cfg-folder').value.toString();
-  alert('Trace: Saving ID [' + id.substring(0,4) + '...]');
-  config.clientId = id; config.folderName = f;
-  safeStorage.set(CONFIG_KEY, JSON.stringify(config));
-  document.getElementById('st-clientid').innerHTML = id.substring(0, 8) + '...';
-  alert('Trace: Config object updated in memory'); hideConfig();
-  if (accessToken) loadLibrary(true);
-}
-function hideConfig() { document.getElementById('config-modal').style.display='none'; }
-function setFilter(t, b) { 
-  activeFilter = t; 
-  var btns = document.getElementsByClassName('filter-btn');
-  for (var i=0; i<btns.length; i++) btns[i].className = 'filter-btn';
-  b.className = 'filter-btn active'; 
-  applyFilters(); 
-}
-function applyFilters() {
-  var q = document.getElementById('search').value.toLowerCase();
-  var f = [];
-  for (var i=0; i<allBooks.length; i++) {
-      var b = allBooks[i];
-      var mType = (activeFilter === 'all' || b.format === activeFilter);
-      var mSearch = (!q || b.title.toLowerCase().indexOf(q) !== -1 || b.author.toLowerCase().indexOf(q) !== -1);
-      if (mType && mSearch) f.push(b);
-  }
-  renderBooks(f);
-}
+function signOut() { window.safeStorage.remove('library_token'); location.reload(); }
+
+function loadLibrary() { alert('Loading Library...'); }
+function closeReader() { document.getElementById('reader-overlay').style.display='none'; }
 </script>
 </body>
 </html>
