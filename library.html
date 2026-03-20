@@ -534,7 +534,6 @@ async function openBook(fileId, title, format) {
     currentTOC = [];
     let tocPath = null;
     
-    // ePub 3 Nav
     const navItem = Object.values(manifest).find(i => i.props.includes('nav'));
     if (navItem) {
       tocPath = opfDir + navItem.href;
@@ -547,7 +546,6 @@ async function openBook(fileId, title, format) {
         if (idx !== -1) currentTOC.push({ label: a.textContent.trim(), index: idx });
       });
     } else {
-      // ePub 2 NCX
       const spineTocId = xml.querySelector('spine').getAttribute('toc');
       if (spineTocId && manifest[spineTocId]) {
         tocPath = opfDir + manifest[spineTocId].href;
@@ -572,7 +570,7 @@ async function openBook(fileId, title, format) {
       div.className = 'epub-chapter';
       div.id = 'chapter-' + i;
       div.dataset.index = i;
-      div.innerHTML = `<div style="text-align:center; font-style:italic; border-bottom:1px solid #ddd; margin: 4rem 0 2rem; padding-bottom:1rem; opacity:0.3;">Loading chapter ${i+1}...</div>`;
+      div.innerHTML = `<div style="text-align:center; font-style:italic; border-bottom:1px solid #ddd; margin: 4rem 0 2rem; padding-bottom:1rem; opacity:0.3;">Loading.</div>`;
       container.appendChild(div);
     }
 
@@ -591,31 +589,45 @@ async function loadAllChapters() {
       const html = await currentZip.file(item.fullPath).async("string");
       const doc = new DOMParser().parseFromString(html, "text/html");
       const dir = item.fullPath.includes('/') ? item.fullPath.substring(0, item.fullPath.lastIndexOf('/') + 1) : '';
+
+      // Fix Images: Robust attribute handling & path decoding
       const imgs = doc.querySelectorAll('img, image');
       for (const img of imgs) {
-        let src = img.getAttribute('src') || img.getAttribute('xlink:href');
-        if (src && !src.startsWith('http')) {
-          const path = resolvePath(dir, src);
-          const f = currentZip.file(path);
-          if (f) {
-            const b = await f.async("blob");
-            const u = URL.createObjectURL(b);
-            blobUrls.push(u);
-            if (img.tagName.toLowerCase() === 'image') img.setAttribute('xlink:href', u);
-            else img.src = u;
-          }
+        let src = img.getAttribute('src') || img.getAttribute('href') || img.getAttribute('xlink:href');
+        if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+          try {
+            const decodedSrc = decodeURIComponent(src);
+            const path = resolvePath(dir, decodedSrc);
+            const zipFile = currentZip.file(path);
+            if (zipFile) {
+              const blob = await zipFile.async("blob");
+              const url = URL.createObjectURL(blob);
+              blobUrls.push(url);
+              
+              if (img.tagName.toLowerCase() === 'image') {
+                img.setAttribute('href', url);
+                img.setAttribute('xlink:href', url);
+              } else {
+                img.src = url;
+              }
+            }
+          } catch(err) {}
         }
       }
       div.innerHTML = doc.body.innerHTML;
-    } catch(e) { div.innerHTML = '<p>Fail.</p>'; }
+    } catch(e) { div.innerHTML = '<p style="text-align:center; padding:2rem; opacity:0.5;">Chapter failed to load.</p>'; }
   }
 }
 
 function resolvePath(base, rel) {
+  if (rel.startsWith('/')) return rel.substring(1);
   let stack = base.split("/").filter(p => p !== '');
-  stack.pop();
+  stack.pop(); // remove filename
   let parts = rel.split("/");
-  for (const p of parts) { if (p === "..") stack.pop(); else if (p !== ".") stack.push(p); }
+  for (const p of parts) {
+    if (p === "..") stack.pop();
+    else if (p !== "." && p !== "") stack.push(p);
+  }
   return stack.join("/");
 }
 
