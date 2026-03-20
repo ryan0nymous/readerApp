@@ -15,8 +15,8 @@
     --text: #e8e0d0;
     --muted: #6b6358;
     --accent: #c9a84c;
-    --accent2: #7a5c2e;
-    --red: #c0392b;
+    --accent-red: #ff6b6b;
+    --accent-green: #51cf66;
     --reader-bg: #f5f0e8;
     --reader-text: #1a1610;
   }
@@ -189,12 +189,6 @@
     margin-left: 0.5rem;
   }
 
-  .reader-controls {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
   .reader-progress {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 10px;
@@ -213,6 +207,26 @@
     cursor: pointer;
   }
 
+  /* ── DEBUG CONSOLE ── */
+  #debug-console {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #1a1a1a;
+    color: #abb2bf;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 5px 10px;
+    z-index: 3000;
+    border-top: 1px solid #333;
+    display: none;
+  }
+  #debug-console.visible { display: block; }
+  .debug-header { display: flex; justify-content: space-between; margin-bottom: 5px; color: var(--accent); text-transform: uppercase; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 3px; position: sticky; top: 0; background: #1a1a1a; }
+
   /* ── TOC DRAWER ── */
   #toc-drawer {
     position: fixed;
@@ -227,73 +241,20 @@
     display: flex;
     flex-direction: column;
   }
-
   #toc-drawer.open { left: 0; }
-
-  #toc-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.3);
-    z-index: 1004;
-    display: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
+  #toc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1004; display: none; opacity: 0; transition: opacity 0.3s; }
   #toc-overlay.show { display: block; opacity: 1; }
-
-  .toc-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid #d4cdc0;
-    font-family: 'Playfair Display', serif;
-    font-weight: 700;
-    color: var(--reader-text);
-  }
-
-  #toc-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem 0;
-  }
-
-  .toc-item {
-    padding: 0.9rem 1.5rem;
-    font-family: 'PT Serif', serif;
-    font-size: 14px;
-    color: #4a443a;
-    cursor: pointer;
-    border-bottom: 1px solid #f0ede8;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    transition: background 0.2s;
-  }
-
+  .toc-header { padding: 1.5rem; border-bottom: 1px solid #d4cdc0; font-family: 'Playfair Display', serif; font-weight: 700; color: var(--reader-text); }
+  #toc-list { flex: 1; overflow-y: auto; padding: 1rem 0; }
+  .toc-item { padding: 0.9rem 1.5rem; font-family: 'PT Serif', serif; font-size: 14px; color: #4a443a; cursor: pointer; border-bottom: 1px solid #f0ede8; min-height: 48px; display: flex; align-items: center; transition: background 0.2s; }
   .toc-item:hover { background: #f0ede8; color: var(--reader-text); }
 
   /* ── READER CONTENT ── */
-  #epub-content-area {
-    flex: 1;
-    overflow-y: auto;
-    background: var(--reader-bg);
-    scrollbar-width: thin;
-    scrollbar-color: #d4cdc0 transparent;
-  }
-
-  #epub-container {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 4rem 1.5rem;
-    color: var(--reader-text);
-    font-family: 'PT Serif', serif;
-    font-size: 17px;
-    line-height: 1.8;
-  }
-
+  #epub-content-area { flex: 1; overflow-y: auto; background: var(--reader-bg); }
+  #epub-container { max-width: 680px; margin: 0 auto; padding: 4rem 1.5rem; color: var(--reader-text); font-family: 'PT Serif', serif; font-size: 17px; line-height: 1.8; }
+  #epub-container h1, h2, h3 { font-family: 'Playfair Display', serif; margin: 2rem 0 1rem; }
   .epub-chapter { margin-bottom: 5rem; }
-  #epub-container h1, #epub-container h2, #epub-container h3 { font-family: 'Playfair Display', serif; margin: 3rem 0 1.5rem; line-height: 1.3; }
-  #epub-container img { max-width: 100%; height: auto; display: block; margin: 2rem auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-  #epub-container p { margin-bottom: 1.5rem; }
+  #epub-container img { max-width: 100%; height: auto; display: block; margin: 2rem auto; }
 
   /* ── MISC UI ── */
   #loading { display: none; align-items: center; justify-content: center; height: 300px; flex-direction: column; gap: 1rem; }
@@ -304,9 +265,9 @@
   #config-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
   .modal-box { background: var(--surface); border: 1px solid var(--border); padding: 2rem; width: 400px; }
   .field-label { display: block; font-size: 10px; color: var(--muted); margin: 1rem 0 0.5rem; text-transform: uppercase; }
-  .field-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.6rem; font-family: inherit; }
+  .field-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.6rem; font-family: inherit; outline: none; }
   .modal-actions { margin-top: 1.5rem; display: flex; gap: 1rem; }
-  .btn-p { background: var(--accent); color: var(--bg); border: none; padding: 0.6rem 1.2rem; cursor: pointer; }
+  .btn-p { background: var(--accent); color: var(--bg); border: none; padding: 0.6rem 1.2rem; cursor: pointer; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -315,7 +276,7 @@
 <div id="auth-screen">
   <div class="auth-title">LIBRARY</div>
   <div class="auth-subtitle">Personal ePub Collection</div>
-  <button class="ctrl-btn" style="padding: 1rem 3rem" onclick="startAuth()">Sign in with Google</button>
+  <button id="sign-in-btn" class="ctrl-btn" style="padding: 1rem 3rem" onclick="startAuth()">Sign in with Google</button>
   <div style="margin-top: 2rem; color: var(--muted); font-size: 12px;">
     Requires OAuth Client ID. <a href="#" onclick="showConfig(); event.preventDefault();" style="color:var(--accent)">Settings</a>
   </div>
@@ -330,15 +291,13 @@
       <button class="ctrl-btn" style="border:none; color:var(--muted)" onclick="signOut()">Sign out</button>
     </div>
   </header>
-
   <div class="filter-bar">
     <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
     <button class="filter-btn" onclick="setFilter('epub', this)">ePub</button>
     <button class="filter-btn" onclick="setFilter('pdf', this)">PDF</button>
-    <button class="ctrl-btn" style="margin-left:auto; border:none; padding: 0; opacity:0.6" onclick="loadLibrary(true)" title="Refresh Library">⟲</button>
-    <span style="color:var(--muted); font-size:10px" id="book-count"></span>
+    <button class="ctrl-btn" style="margin-left:auto; border:none; padding: 0.2rem; opacity:0.6; font-size: 14px" onclick="loadLibrary(true)" title="Force Sync Library">⟲</button>
+    <span style="color:var(--muted); font-size:10px; min-width: 60px; text-align: right" id="book-count"></span>
   </div>
-
   <div id="loading"><div class="spinner"></div><div id="loading-text">Loading...</div></div>
   <div id="book-list"></div>
 </div>
@@ -346,23 +305,20 @@
 <!-- READER -->
 <div id="reader-overlay">
   <div class="reader-header">
-    <button class="ctrl-btn" onclick="toggleTOC(true)" id="toc-toggle">☰</button>
+    <button class="ctrl-btn" onclick="toggleTOC(true)">☰</button>
     <div class="reader-title" id="reader-title"></div>
     <div class="reader-controls">
       <span class="reader-progress" id="reader-progress"></span>
-      <div style="width:0.5rem"></div>
       <button class="ctrl-btn" onclick="changeFontSize(-1)">A-</button>
       <button class="ctrl-btn" onclick="changeFontSize(1)">A+</button>
-      <button class="ctrl-btn" onclick="closeReader()" style="margin-left:5px">✕</button>
+      <button class="ctrl-btn" onclick="closeReader()">✕</button>
     </div>
   </div>
-  <div id="epub-content-area" style="display:none">
-    <div id="epub-container"></div>
-  </div>
+  <div id="epub-content-area" style="display:none"><div id="epub-container"></div></div>
   <iframe id="pdf-frame" style="display:none"></iframe>
 </div>
 
-<!-- TOC DRAWER -->
+<!-- TOC -->
 <div id="toc-overlay" onclick="toggleTOC(false)"></div>
 <div id="toc-drawer">
   <div class="toc-header">Contents</div>
@@ -372,17 +328,27 @@
 <!-- CONFIG -->
 <div id="config-modal">
   <div class="modal-box">
-    <div style="font-family:'Playfair Display'; color:var(--accent)">Configuration</div>
+    <div style="font-family:'Playfair Display'; color:var(--accent); font-size: 1.2rem; margin-bottom: 1rem;">Configuration</div>
     <label class="field-label">OAuth Client ID</label>
-    <input class="field-input" id="cfg-client-id">
-    <label class="field-label">Folder Name</label>
-    <input class="field-input" id="cfg-folder">
+    <input class="field-input" id="cfg-client-id" placeholder="Paste your Client ID here">
+    <label class="field-label">Drive Folder Name</label>
+    <input class="field-input" id="cfg-folder" placeholder="e.g., CalibreLibrary">
     <div class="modal-actions">
-      <button class="btn-p" onclick="saveConfig()">Save</button>
+      <button class="btn-p" onclick="saveConfig()">Save & Connect</button>
       <button class="ctrl-btn" onclick="hideConfig()">Cancel</button>
     </div>
   </div>
 </div>
+
+<!-- DEBUG CONSOLE -->
+<div id="debug-console">
+  <div class="debug-header">
+    <span>Debug Monitor</span>
+    <span style="cursor:pointer" onclick="this.parentElement.parentElement.classList.remove('visible')">✕ Close</span>
+  </div>
+  <div id="debug-logs"></div>
+</div>
+<div onclick="document.getElementById('debug-console').classList.toggle('visible')" style="position:fixed; bottom:10px; right:10px; font-size:10px; color:#444; cursor:pointer; z-index:2999">debug</div>
 
 <script>
 // ── STATE ──
@@ -395,26 +361,40 @@ let allBooks = [];
 let activeFilter = 'all';
 let accessToken = localStorage.getItem(TOKEN_KEY);
 
-// EPUB STATE
-let currentZip = null;
-let currentSpine = [];
-let currentTOC = [];
-let blobUrls = [];
-let readerFontSize = 17;
-let observer = null;
+// EPUB
+let currentZip = null, currentSpine = [], currentTOC = [], blobUrls = [], readerFontSize = 17, observer = null;
+
+// ── LOGGING ──
+function log(msg, type = 'info') {
+  console.log(`[${type.toUpperCase()}] ${msg}`);
+  const logs = document.getElementById('debug-logs');
+  if (logs) {
+    const d = document.createElement('div');
+    d.style.color = type === 'error' ? 'var(--accent-red)' : (type === 'success' ? 'var(--accent-green)' : '#abb2bf');
+    d.textContent = `> ${new Date().toLocaleTimeString().split(' ')[0]}: ${msg}`;
+    logs.appendChild(d);
+    logs.scrollTop = logs.scrollHeight;
+  }
+}
 
 // ── INIT ──
 window.onload = () => {
   const hash = window.location.hash;
   if (hash.includes('access_token')) {
+    log("OAuth redirect detected, parsing token...", "info");
     const params = new URLSearchParams(hash.substring(1));
     accessToken = params.get('access_token');
     localStorage.setItem(TOKEN_KEY, accessToken);
     localStorage.setItem(TOKEN_TIME_KEY, Date.now());
     window.location.hash = '';
-    showApp(); loadLibrary();
+    showApp(); 
+    loadLibrary();
   } else if (accessToken && checkToken(false)) {
-    showApp(); loadLibrary();
+    log("Session active. Loading library.", "success");
+    showApp(); 
+    loadLibrary();
+  } else {
+    log("Logged out. Waiting for user.", "info");
   }
 };
 
@@ -422,6 +402,7 @@ function checkToken(proactive = true) {
   const time = localStorage.getItem(TOKEN_TIME_KEY);
   if (!time) return false;
   if (Date.now() - parseInt(time) > 55 * 60 * 1000) {
+    log("Token expired.", "info");
     if (proactive) startAuth();
     return false;
   }
@@ -429,12 +410,15 @@ function checkToken(proactive = true) {
 }
 
 function startAuth() {
-  if (!config.clientId) { showConfig(); return; }
+  if (!config.clientId) { log("Missing Client ID. Opening settings.", "info"); showConfig(); return; }
+  document.getElementById('sign-in-btn').textContent = 'Connecting...';
+  log("Redirecting to Google for authentication...", "info");
   const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(config.clientId)}&redirect_uri=${encodeURIComponent(window.location.origin + window.location.pathname)}&response_type=token&scope=https://www.googleapis.com/auth/drive.readonly`;
   window.location.href = url;
 }
 
 function signOut() {
+  log("Signing out and clearing session data.", "info");
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(TOKEN_TIME_KEY);
   localStorage.removeItem(CACHE_KEY);
@@ -443,35 +427,40 @@ function signOut() {
 
 // ── DRIVE ──
 async function driveRequest(url) {
-  if (!accessToken) throw new Error("No access token available. Please sign in.");
+  if (!accessToken) throw new Error("Not logged in");
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (res.status === 401) { signOut(); throw new Error('Session expired'); }
-  if (!res.ok) throw new Error(`Google API failed: ${res.status}`);
+  if (res.status === 401) { signOut(); throw new Error("Session expired"); }
+  if (!res.ok) throw new Error(`API Error: ${res.status}`);
   return res.json();
 }
 
 async function findFolder(name) {
+  log(`Searching Drive for folder: "${name}"...`, "info");
   const query = encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
   const data = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`);
-  return data.files && data.files[0] ? data.files[0].id : null;
+  const id = data.files && data.files[0] ? data.files[0].id : null;
+  if (id) log(`Found folder ID: ${id}`, "success");
+  return id;
 }
 
 async function recursiveScan(folderId, depth = 0) {
   if (depth > 6) return [];
   const query = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
-  const data = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType)&pageSize=1000`);
+  const data = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=1000`);
   const items = data.files || [];
   
-  const coverFile = items.find(f => f.name.toLowerCase() === 'cover.jpg');
+  const coverFile = items.find(f => f.name && f.name.toLowerCase() === 'cover.jpg');
   const coverId = coverFile ? coverFile.id : null;
   
   let books = items.filter(f => f.name && (f.name.toLowerCase().endsWith('.epub') || f.name.toLowerCase().endsWith('.pdf')))
     .map(f => ({ id: f.id, name: f.name, coverId }));
   
+  log(`Folder scan: ${books.length} books found at depth ${depth}`, "info");
+
   for (const f of items.filter(f => f.mimeType === 'application/vnd.google-apps.folder')) {
     try {
       books = books.concat(await recursiveScan(f.id, depth + 1));
-    } catch(err) { console.warn("Skip subfolder:", f.name); }
+    } catch(err) { log(`Skipping folder: ${f.name}`, "info"); }
   }
   return books;
 }
@@ -481,19 +470,25 @@ async function loadLibrary(force = false) {
   const loading = document.getElementById('loading');
   const cache = localStorage.getItem(CACHE_KEY);
   
-  if (cache) { allBooks = JSON.parse(cache); renderBooks(allBooks); if (!force) return; }
-  
-  loading.style.display = 'flex';
-  document.getElementById('loading-text').textContent = 'Connecting to Drive...';
+  if (cache) {
+    allBooks = JSON.parse(cache);
+    renderBooks(allBooks);
+    log(`Restored ${allBooks.length} books from cache.`, "success");
+    if (!force) { log("Auto-syncing library in background...", "info"); } 
+    else { loading.style.display = 'flex'; }
+  } else {
+    loading.style.display = 'flex';
+  }
 
   try {
     const rootId = await findFolder(config.folderName || 'CalibreLibrary');
     if (!rootId) {
-      document.getElementById('loading-text').textContent = 'Root folder not found.';
+      log("Target folder not found on Drive.", "error");
+      document.getElementById('loading-text').textContent = 'Folder not found. Check Settings.';
       return;
     }
     
-    document.getElementById('loading-text').textContent = 'Scanning library...';
+    document.getElementById('loading-text').textContent = 'Syncing collection...';
     const files = await recursiveScan(rootId);
     
     const newBooks = files.map(f => {
@@ -501,7 +496,7 @@ async function loadLibrary(force = false) {
       return { 
         id: f.id, 
         title: parts[0] || 'Untitled', 
-        author: parts[1] || '', 
+        author: parts[1] || 'Unknown Author', 
         format: f.name.split('.').pop().toLowerCase(), 
         coverId: f.coverId 
       };
@@ -511,10 +506,11 @@ async function loadLibrary(force = false) {
       allBooks = newBooks;
       localStorage.setItem(CACHE_KEY, JSON.stringify(allBooks));
       renderBooks(allBooks);
+      log(`Library synced. Total: ${allBooks.length} books.`, "success");
     }
   } catch(e) {
-    console.error("Library scan failed", e);
-    document.getElementById('loading-text').textContent = 'Scan error. Please try again.';
+    log(`Sync failed: ${e.message}`, "error");
+    document.getElementById('loading-text').textContent = 'Sync failed. Try manually refreshing.';
   } finally {
     loading.style.display = 'none';
   }
@@ -524,7 +520,7 @@ function renderBooks(books) {
   const list = document.getElementById('book-list');
   document.getElementById('book-count').textContent = books.length + ' books';
   if (books.length === 0) {
-    list.innerHTML = '<div style="grid-column:1/-1; padding:4rem; text-align:center; color:var(--muted)">No books found. Please Refresh or check settings.</div>';
+    list.innerHTML = '<div style="grid-column:1/-1; padding:4rem; text-align:center; color:var(--muted)">Your library is empty. Click ⟲ to refresh.</div>';
     return;
   }
   list.innerHTML = books.map(b => `
@@ -548,7 +544,8 @@ async function openBook(fileId, title, format) {
   if (!checkToken()) return;
   document.getElementById('reader-title').textContent = title;
   document.getElementById('reader-overlay').style.display = 'flex';
-  
+  log(`Opening book: ${title}`, "info");
+
   if (format === 'pdf') {
     document.getElementById('pdf-frame').src = `https://drive.google.com/file/d/${fileId}/preview`;
     document.getElementById('pdf-frame').style.display = 'block';
@@ -563,31 +560,51 @@ async function openBook(fileId, title, format) {
 
   try {
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
-    const buffer = await res.arrayBuffer();
-    currentZip = await JSZip.loadAsync(buffer);
+    currentZip = await JSZip.loadAsync(await res.arrayBuffer());
 
-    const containerXml = await currentZip.file("META-INF/container.xml").async("text");
-    const opfPath = containerXml.match(/full-path="([^"]+)"/)[1];
+    const cXml = await currentZip.file("META-INF/container.xml").async("text");
+    const opfPath = cXml.match(/full-path="([^"]+)"/)[1];
     const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
     const opfXml = await currentZip.file(opfPath).async("text");
     
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(opfXml, "text/xml");
+    const parser = new DOMParser(), xml = parser.parseFromString(opfXml, "text/xml");
     const manifest = {};
     xml.querySelectorAll('manifest > item').forEach(i => manifest[i.getAttribute('id')] = { href: i.getAttribute('href'), props: i.getAttribute('properties') || '' });
     
     const spineNodes = Array.from(xml.querySelectorAll('spine > itemref'));
     currentSpine = spineNodes.map(r => ({ fullPath: opfDir + manifest[r.getAttribute('idref')].href }));
 
-    renderTOC_Logic(xml, opfDir, manifest, parser);
+    // TOC
+    currentTOC = [];
+    let tPath = null, navItem = Object.values(manifest).find(i => i.props.includes('nav'));
+    if (navItem) {
+      tPath = opfDir + navItem.href;
+      const nDoc = parser.parseFromString(await currentZip.file(tPath).async("string"), "text/html");
+      const nDir = tPath.includes('/') ? tPath.substring(0, tPath.lastIndexOf('/') + 1) : '';
+      nDoc.querySelectorAll('nav[epub\\:type="toc"] a, nav#toc a').forEach(a => {
+        const full = resolvePath(nDir, a.getAttribute('href')).split('#')[0];
+        const idx = currentSpine.findIndex(s => s.fullPath === full);
+        if (idx !== -1) currentTOC.push({ label: a.textContent.trim(), index: idx });
+      });
+    } else {
+      const sTocId = xml.querySelector('spine').getAttribute('toc');
+      if (sTocId && manifest[sTocId]) {
+        tPath = opfDir + manifest[sTocId].href;
+        const nDoc = parser.parseFromString(await currentZip.file(tPath).async("string"), "text/xml");
+        const nDir = tPath.includes('/') ? tPath.substring(0, tPath.lastIndexOf('/') + 1) : '';
+        nDoc.querySelectorAll('navPoint').forEach(p => {
+          const idx = currentSpine.findIndex(s => s.fullPath === resolvePath(nDir, p.querySelector('content').getAttribute('src').split('#')[0]));
+          if (idx !== -1) currentTOC.push({ label: p.querySelector('navLabel text').textContent.trim(), index: idx });
+        });
+      }
+    }
+    renderTOC();
+
     container.innerHTML = '';
     for (let i = 0; i < currentSpine.length; i++) {
-      const div = document.createElement('div');
-      div.className = 'epub-chapter';
-      div.dataset.index = i;
-      div.id = 'chapter-' + i;
-      div.innerHTML = `<div style="text-align:center; opacity:0.1; margin: 4rem 0;">.</div>`;
-      container.appendChild(div);
+      const d = document.createElement('div'); d.className = 'epub-chapter'; d.dataset.index = i; d.id = 'chapter-' + i;
+      d.innerHTML = `<div style="text-align:center; opacity:0.1; margin: 4rem 0;">.</div>`;
+      container.appendChild(d);
     }
     setupObserver();
     loadAllChapters();
@@ -595,58 +612,20 @@ async function openBook(fileId, title, format) {
   } catch(e) { container.innerHTML = 'Error: ' + e.message; }
 }
 
-async function renderTOC_Logic(xml, opfDir, manifest, parser) {
-    currentTOC = [];
-    let tocPath = null;
-    const navItem = Object.values(manifest).find(i => i.props.includes('nav'));
-    if (navItem) {
-      tocPath = opfDir + navItem.href;
-      const navXml = await currentZip.file(tocPath).async("string");
-      const navDoc = parser.parseFromString(navXml, "text/html");
-      const navDir = tocPath.includes('/') ? tocPath.substring(0, tocPath.lastIndexOf('/') + 1) : '';
-      navDoc.querySelectorAll('nav[epub\\:type="toc"] a, nav#toc a').forEach(a => {
-        const fullRelPath = resolvePath(navDir, a.getAttribute('href')).split('#')[0];
-        const idx = currentSpine.findIndex(s => s.fullPath === fullRelPath);
-        if (idx !== -1) currentTOC.push({ label: a.textContent.trim(), index: idx });
-      });
-    } else {
-      const spineTocId = xml.querySelector('spine').getAttribute('toc');
-      if (spineTocId && manifest[spineTocId]) {
-        tocPath = opfDir + manifest[spineTocId].href;
-        const ncxXml = await currentZip.file(tocPath).async("string");
-        const ncxDoc = parser.parseFromString(ncxXml, "text/xml");
-        const ncxDir = tocPath.includes('/') ? tocPath.substring(0, tocPath.lastIndexOf('/') + 1) : '';
-        ncxDoc.querySelectorAll('navPoint').forEach(p => {
-          const src = p.querySelector('content').getAttribute('src').split('#')[0];
-          const fullRelPath = resolvePath(ncxDir, src);
-          const idx = currentSpine.findIndex(s => s.fullPath === fullRelPath);
-          const label = p.querySelector('navLabel text').textContent.trim();
-          if (idx !== -1) currentTOC.push({ label, index: idx });
-        });
-      }
-    }
-    renderTOC();
-}
-
 async function loadAllChapters() {
   for (let i = 0; i < currentSpine.length; i++) {
-    const item = currentSpine[i];
-    const div = document.getElementById('chapter-' + i);
+    const item = currentSpine[i], div = document.getElementById('chapter-' + i);
     try {
-      const html = await currentZip.file(item.fullPath).async("string");
-      const doc = new DOMParser().parseFromString(html, "text/html");
+      const doc = new DOMParser().parseFromString(await currentZip.file(item.fullPath).async("string"), "text/html");
       const dir = item.fullPath.includes('/') ? item.fullPath.substring(0, item.fullPath.lastIndexOf('/') + 1) : '';
       const imgs = doc.querySelectorAll('img, image');
       for (const img of imgs) {
         let src = img.getAttribute('src') || img.getAttribute('href') || img.getAttribute('xlink:href');
         if (src && !src.startsWith('http') && !src.startsWith('data:')) {
           try {
-            const decodedSrc = decodeURIComponent(src);
-            const path = resolvePath(dir, decodedSrc);
-            const zipFile = currentZip.file(path);
-            if (zipFile) {
-              const blob = await zipFile.async("blob");
-              const url = URL.createObjectURL(blob);
+            const path = resolvePath(dir, decodeURIComponent(src)), zf = currentZip.file(path);
+            if (zf) {
+              const url = URL.createObjectURL(await zf.async("blob"));
               blobUrls.push(url);
               if (img.tagName.toLowerCase() === 'image') { img.setAttribute('href', url); img.setAttribute('xlink:href', url); }
               else img.src = url;
@@ -655,16 +634,14 @@ async function loadAllChapters() {
         }
       }
       div.innerHTML = doc.body.innerHTML;
-    } catch(e) { div.innerHTML = '<p style="text-align:center; padding:2rem; opacity:0.5;">Chapter failed.</p>'; }
+    } catch(e) { div.innerHTML = '<p style="text-align:center; opacity:0.5;">Chapter failed.</p>'; }
   }
 }
 
 function resolvePath(base, rel) {
   if (rel.startsWith('/')) return rel.substring(1);
-  let stack = base.split("/").filter(p => p !== '');
-  stack.pop();
-  let parts = rel.split("/");
-  for (const p of parts) { if (p === "..") stack.pop(); else if (p !== "." && p !== "") stack.push(p); }
+  let stack = base.split("/").filter(p => p !== ''); stack.pop();
+  for (const p of rel.split("/")) { if (p === "..") stack.pop(); else if (p !== "." && p !== "") stack.push(p); }
   return stack.join("/");
 }
 
@@ -673,28 +650,37 @@ function setupObserver() {
   observer = new IntersectionObserver(entries => {
     let best = null;
     entries.forEach(e => { if (e.isIntersecting && (!best || e.intersectionRatio > best.intersectionRatio)) best = e; });
-    if (best) {
-      const idx = parseInt(best.target.dataset.index);
-      document.getElementById('reader-progress').textContent = `Ch ${idx+1} of ${currentSpine.length}`;
-    }
-  }, { threshold: [0, 0.1, 0.5, 0.9] });
+    if (best) document.getElementById('reader-progress').textContent = `Ch ${parseInt(best.target.dataset.index)+1} of ${currentSpine.length}`;
+  }, { threshold: [0, 0.1, 0.5] });
   document.querySelectorAll('.epub-chapter').forEach(d => observer.observe(d));
 }
 
 function renderTOC() {
-  const list = document.getElementById('toc-list');
-  list.innerHTML = currentTOC.map(t => `<div class="toc-item" onclick="jumpToChapter(${t.index})">${esc(t.label)}</div>`).join('');
-  if (currentTOC.length === 0) list.innerHTML = '<div style="padding:1.5rem; color:#888;">No TOC.</div>';
+  const l = document.getElementById('toc-list');
+  l.innerHTML = currentTOC.map(t => `<div class="toc-item" onclick="jumpToChapter(${t.index})">${esc(t.label)}</div>`).join('');
+  if (!currentTOC.length) l.innerHTML = '<div style="padding:1.5rem; color:#888;">No TOC.</div>';
 }
 
 function toggleTOC(show) { document.getElementById('toc-drawer').classList.toggle('open', show); document.getElementById('toc-overlay').classList.toggle('show', show); }
 function jumpToChapter(idx) { toggleTOC(false); const el = document.getElementById('chapter-' + idx); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
 function changeFontSize(d) { readerFontSize = Math.max(12, Math.min(30, readerFontSize + d)); document.getElementById('epub-container').style.fontSize = readerFontSize + 'px'; }
-function closeReader() { document.getElementById('reader-overlay').style.display = 'none'; document.getElementById('pdf-frame').src = ''; document.getElementById('epub-container').innerHTML = ''; document.getElementById('epub-content-area').style.display = 'none'; toggleTOC(false); blobUrls.forEach(URL.revokeObjectURL); blobUrls = []; currentZip = null; }
+function closeReader() { document.getElementById('reader-overlay').style.display = 'none'; document.getElementById('epub-content-area').style.display = 'none'; toggleTOC(false); blobUrls.forEach(URL.revokeObjectURL); blobUrls = []; currentZip = null; log("Reader closed.", "info"); }
 function showApp() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('app').style.display = 'flex'; }
 function showConfig() { document.getElementById('cfg-client-id').value = config.clientId || ''; document.getElementById('cfg-folder').value = config.folderName || 'CalibreLibrary'; document.getElementById('config-modal').style.display = 'flex'; }
 function hideConfig() { document.getElementById('config-modal').style.display = 'none'; }
-function saveConfig() { config.clientId = document.getElementById('cfg-client-id').value.trim(); config.folderName = document.getElementById('cfg-folder').value.trim(); localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); hideConfig(); if (accessToken) loadLibrary(true); }
+function saveConfig() {
+  config.clientId = document.getElementById('cfg-client-id').value.trim();
+  config.folderName = document.getElementById('cfg-folder').value.trim();
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+  hideConfig();
+  log("Configuration saved.", "success");
+  if (!accessToken) {
+    log("Redirecting to login...", "info");
+    startAuth();
+  } else {
+    loadLibrary(true);
+  }
+}
 function setFilter(t, b) { activeFilter = t; document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); applyFilters(); }
 function filterBooks() { applyFilters(); }
 function applyFilters() {
