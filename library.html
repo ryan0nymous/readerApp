@@ -536,11 +536,12 @@
 </div>
 
 <!-- EPUB.JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
 <script>
 // ── CONFIG ──
 const CONFIG_KEY = 'library_config';
+const CACHE_KEY = 'library_cache';
 let config = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
 
 // ── STATE ──
@@ -615,6 +616,7 @@ function startAuth() {
 
 function signOut() {
   localStorage.removeItem('library_token');
+  localStorage.removeItem(CACHE_KEY);
   accessToken = null;
   allBooks = [];
   showAuthScreen();
@@ -703,18 +705,27 @@ function parseBookName(filename) {
 // ── LOAD LIBRARY ──
 async function loadLibrary() {
   const loading = document.getElementById('loading');
-  loading.style.display = 'flex';
-  document.getElementById('book-list').innerHTML = '';
+  
+  // Try loading from cache first
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    try {
+      allBooks = JSON.parse(cached);
+      renderBooks(allBooks);
+    } catch(e) { console.error('Cache corrupt', e); }
+  } else {
+    loading.style.display = 'flex';
+  }
 
   try {
-    setLoadingText('Finding library folder...');
+    setLoadingText('Scanning for changes...');
     const folderId = await findFolder(config.folderName || 'CalibreLibrary');
     if (!folderId) {
       setLoadingText(`Folder "${config.folderName}" not found in Drive`);
+      loading.style.display = 'flex';
       return;
     }
 
-    setLoadingText('Scanning collection...');
     const files = await recursiveScan(folderId);
 
     allBooks = files.map(f => {
@@ -733,11 +744,15 @@ async function loadLibrary() {
     // Sort by title
     allBooks.sort((a, b) => a.title.localeCompare(b.title));
 
+    // Save to cache
+    localStorage.setItem(CACHE_KEY, JSON.stringify(allBooks));
+
     loading.style.display = 'none';
     renderBooks(allBooks);
   } catch (e) {
     if (e.message !== 'Token expired') {
       setLoadingText('Error loading library. Try signing out and back in.');
+      loading.style.display = 'flex';
       console.error(e);
     }
   }
@@ -760,7 +775,7 @@ function renderBooks(books) {
   list.innerHTML = books.map(b => {
     // Build cover: thumbnail image if available, otherwise text placeholder
     const coverInner = b.thumbnailLink
-      ? `<img src="${escAttr(b.thumbnailLink)}&access_token=${encodeURIComponent(accessToken)}"
+      ? `<img src="${escAttr(b.thumbnailLink)}?access_token=${encodeURIComponent(accessToken)}"
               alt="${escAttr(b.title)}"
               loading="lazy"
               onerror="this.parentNode.innerHTML='<div class=\\'book-cover-placeholder\\'><div class=\\'cover-title\\'>${escHtmlForAttr(b.title)}</div><div class=\\'cover-author\\'>${escHtmlForAttr(b.author)}</div></div><span class=\\'format-badge ${b.format}\\'>${b.format.toUpperCase()}</span>'">`
@@ -849,6 +864,10 @@ async function openBook(fileId, title, format) {
       container.style.height = '100%';
 
       if (currentBook) { try { currentBook.destroy(); } catch(e) {} }
+
+      if (typeof ePub === 'undefined') {
+          throw new Error('EPUB library failed to load. Please check your internet connection and reload.');
+      }
 
       currentBook = ePub(arrayBuffer);
       const rendition = currentBook.renderTo(container, {
