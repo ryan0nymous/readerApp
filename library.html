@@ -357,6 +357,13 @@
 
   #epub-frame {
     flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #epub-container {
+    width: 100%;
+    height: calc(100vh - 60px);
     overflow: hidden;
   }
 
@@ -455,13 +462,6 @@
     letter-spacing: 0.1em;
   }
 
-  /* ── EPUB READER STYLES ── */
-  #epub-container {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-  }
-
   /* Mobile adjustments */
   @media (max-width: 600px) {
     #search { width: 140px; }
@@ -542,6 +542,8 @@
 // ── CONFIG ──
 const CONFIG_KEY = 'library_config';
 const CACHE_KEY = 'library_cache';
+const TOKEN_KEY = 'library_token';
+const TOKEN_TIME_KEY = 'library_token_time';
 let config = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
 
 // ── STATE ──
@@ -557,7 +559,8 @@ window.onload = () => {
   if (hash.includes('access_token')) {
     const params = new URLSearchParams(hash.substring(1));
     accessToken = params.get('access_token');
-    localStorage.setItem('library_token', accessToken);
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    localStorage.setItem(TOKEN_TIME_KEY, Date.now().toString());
     window.location.hash = '';
     showApp();
     loadLibrary();
@@ -565,11 +568,15 @@ window.onload = () => {
   }
 
   // Check stored token
-  const stored = localStorage.getItem('library_token');
+  const stored = localStorage.getItem(TOKEN_KEY);
   if (stored) {
-    accessToken = stored;
-    showApp();
-    loadLibrary();
+    if (checkToken(false)) {
+      accessToken = stored;
+      showApp();
+      loadLibrary();
+    } else {
+      showAuthScreen();
+    }
     return;
   }
 
@@ -579,6 +586,31 @@ window.onload = () => {
       'Client ID configured. <a href="#" onclick="showConfig()">Change settings</a>';
   }
 };
+
+/**
+ * Validates the current OAuth token.
+ * Proactive check against the 55-minute limit (tokens usually last 60 min).
+ */
+function checkToken(proactive = true) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const time = localStorage.getItem(TOKEN_TIME_KEY);
+  
+  if (!token || !time) return false;
+
+  const ageMinutes = (Date.now() - parseInt(time)) / (1000 * 60);
+  if (ageMinutes > 55) {
+    console.log('Token near expiry, re-authenticating...');
+    if (proactive) startAuth();
+    return false;
+  }
+  return true;
+}
+
+function forceReAuth() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_TIME_KEY);
+  startAuth();
+}
 
 // ── CONFIG MODAL ──
 function showConfig() {
@@ -615,7 +647,8 @@ function startAuth() {
 }
 
 function signOut() {
-  localStorage.removeItem('library_token');
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_TIME_KEY);
   localStorage.removeItem(CACHE_KEY);
   accessToken = null;
   allBooks = [];
@@ -639,8 +672,7 @@ async function driveRequest(url) {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
   if (res.status === 401) {
-    localStorage.removeItem('library_token');
-    showAuthScreen();
+    forceReAuth();
     throw new Error('Token expired');
   }
   return res.json();
@@ -706,6 +738,9 @@ function parseBookName(filename) {
 async function loadLibrary() {
   const loading = document.getElementById('loading');
   
+  // Proactive token check before scanning
+  if (!checkToken()) return;
+
   // Try loading from cache first
   const cached = localStorage.getItem(CACHE_KEY);
   if (cached) {
@@ -835,6 +870,9 @@ function applyFilters() {
 
 // ── OPEN BOOK ──
 async function openBook(fileId, title, format) {
+  // Proactive token check before opening
+  if (!checkToken()) return;
+
   document.getElementById('reader-title').textContent = title;
   document.getElementById('reader-overlay').style.display = 'flex';
   document.getElementById('epub-frame').style.display = 'none';
@@ -857,11 +895,16 @@ async function openBook(fileId, title, format) {
         `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
+      
+      if (res.status === 401) {
+          forceReAuth();
+          throw new Error('OAuth token expired. Redirecting to sign-in...');
+      }
+
       const blob = await res.blob();
       const arrayBuffer = await blob.arrayBuffer();
 
       container.innerHTML = '';
-      container.style.height = '100%';
 
       if (currentBook) { try { currentBook.destroy(); } catch(e) {} }
 
@@ -873,7 +916,8 @@ async function openBook(fileId, title, format) {
       const rendition = currentBook.renderTo(container, {
         width: '100%',
         height: '100%',
-        spread: 'none'
+        flow: "scrolled-doc",
+        allowScriptedContent: true
       });
       rendition.display();
 
