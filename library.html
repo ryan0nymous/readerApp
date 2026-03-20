@@ -175,6 +175,7 @@
     background: #ede8e0;
     border-bottom: 1px solid #d4cdc0;
     flex-shrink: 0;
+    z-index: 1002;
   }
 
   .reader-title {
@@ -185,6 +186,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     flex: 1;
+    margin-left: 0.5rem;
   }
 
   .reader-controls {
@@ -211,6 +213,65 @@
     cursor: pointer;
   }
 
+  /* ── TOC DRAWER ── */
+  #toc-drawer {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 300px;
+    height: 100%;
+    background: var(--reader-bg);
+    box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+    z-index: 1005;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  #toc-drawer.open { left: 0; }
+
+  #toc-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 1004;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  #toc-overlay.show { display: block; opacity: 1; }
+
+  .toc-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #d4cdc0;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: var(--reader-text);
+  }
+
+  #toc-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0;
+  }
+
+  .toc-item {
+    padding: 0.9rem 1.5rem;
+    font-family: 'PT Serif', serif;
+    font-size: 14px;
+    color: #4a443a;
+    cursor: pointer;
+    border-bottom: 1px solid #f0ede8;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+  }
+
+  .toc-item:hover { background: #f0ede8; color: var(--reader-text); }
+
+  /* ── READER CONTENT ── */
   #epub-content-area {
     flex: 1;
     overflow-y: auto;
@@ -229,24 +290,9 @@
     line-height: 1.8;
   }
 
-  .epub-chapter {
-    margin-bottom: 5rem;
-  }
-
-  #epub-container h1, #epub-container h2, #epub-container h3 {
-    font-family: 'Playfair Display', serif;
-    margin: 3rem 0 1.5rem;
-    line-height: 1.3;
-  }
-
-  #epub-container img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 2rem auto;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  }
-
+  .epub-chapter { margin-bottom: 5rem; }
+  #epub-container h1, #epub-container h2, #epub-container h3 { font-family: 'Playfair Display', serif; margin: 3rem 0 1.5rem; line-height: 1.3; }
+  #epub-container img { max-width: 100%; height: auto; display: block; margin: 2rem auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
   #epub-container p { margin-bottom: 1.5rem; }
 
   /* ── MISC UI ── */
@@ -299,10 +345,11 @@
 <!-- READER -->
 <div id="reader-overlay">
   <div class="reader-header">
+    <button class="ctrl-btn" onclick="toggleTOC(true)" id="toc-toggle">☰</button>
     <div class="reader-title" id="reader-title"></div>
     <div class="reader-controls">
       <span class="reader-progress" id="reader-progress"></span>
-      <div style="width:1rem"></div>
+      <div style="width:0.5rem"></div>
       <button class="ctrl-btn" onclick="changeFontSize(-1)">A-</button>
       <button class="ctrl-btn" onclick="changeFontSize(1)">A+</button>
       <button class="ctrl-btn" onclick="closeReader()" style="margin-left:5px">✕</button>
@@ -312,6 +359,13 @@
     <div id="epub-container"></div>
   </div>
   <iframe id="pdf-frame" style="display:none"></iframe>
+</div>
+
+<!-- TOC DRAWER -->
+<div id="toc-overlay" onclick="toggleTOC(false)"></div>
+<div id="toc-drawer">
+  <div class="toc-header">Contents</div>
+  <div id="toc-list"></div>
 </div>
 
 <!-- CONFIG -->
@@ -343,6 +397,7 @@ let accessToken = null;
 // EPUB STATE
 let currentZip = null;
 let currentSpine = [];
+let currentTOC = [];
 let blobUrls = [];
 let readerFontSize = 17;
 let observer = null;
@@ -388,6 +443,11 @@ async function driveRequest(url) {
   return res.json();
 }
 
+async function findFolder(name) {
+  const data = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`)}`);
+  return data.files && data.files[0] ? data.files[0].id : null;
+}
+
 async function recursiveScan(folderId) {
   const data = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`'${folderId}' in parents and trashed=false`)}&fields=files(id,name,mimeType)`);
   const items = data.files || [];
@@ -413,11 +473,6 @@ async function loadLibrary() {
     localStorage.setItem(CACHE_KEY, JSON.stringify(allBooks));
     renderBooks(allBooks);
   }
-}
-
-async function findFolder(name) {
-  const data = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`)}`);
-  return data.files && data.files[0] ? data.files[0].id : null;
 }
 
 function renderBooks(books) {
@@ -467,26 +522,62 @@ async function openBook(fileId, title, format) {
     const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
     const opfXml = await currentZip.file(opfPath).async("text");
     
-    const xml = new DOMParser().parseFromString(opfXml, "text/xml");
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(opfXml, "text/xml");
     const manifest = {};
-    xml.querySelectorAll('manifest > item').forEach(i => manifest[i.getAttribute('id')] = i.getAttribute('href'));
-    currentSpine = Array.from(xml.querySelectorAll('spine > itemref')).map(r => ({ fullPath: opfDir + manifest[r.getAttribute('idref')] }));
+    xml.querySelectorAll('manifest > item').forEach(i => manifest[i.getAttribute('id')] = { href: i.getAttribute('href'), props: i.getAttribute('properties') || '' });
+    
+    const spineNodes = Array.from(xml.querySelectorAll('spine > itemref'));
+    currentSpine = spineNodes.map(r => ({ fullPath: opfDir + manifest[r.getAttribute('idref')].href }));
 
+    // TOC PARSING
+    currentTOC = [];
+    let tocPath = null;
+    
+    // ePub 3 Nav
+    const navItem = Object.values(manifest).find(i => i.props.includes('nav'));
+    if (navItem) {
+      tocPath = opfDir + navItem.href;
+      const navXml = await currentZip.file(tocPath).async("string");
+      const navDoc = parser.parseFromString(navXml, "text/html");
+      const navDir = tocPath.includes('/') ? tocPath.substring(0, tocPath.lastIndexOf('/') + 1) : '';
+      navDoc.querySelectorAll('nav[epub\\:type="toc"] a, nav#toc a').forEach(a => {
+        const fullRelPath = resolvePath(navDir, a.getAttribute('href')).split('#')[0];
+        const idx = currentSpine.findIndex(s => s.fullPath === fullRelPath);
+        if (idx !== -1) currentTOC.push({ label: a.textContent.trim(), index: idx });
+      });
+    } else {
+      // ePub 2 NCX
+      const spineTocId = xml.querySelector('spine').getAttribute('toc');
+      if (spineTocId && manifest[spineTocId]) {
+        tocPath = opfDir + manifest[spineTocId].href;
+        const ncxXml = await currentZip.file(tocPath).async("string");
+        const ncxDoc = parser.parseFromString(ncxXml, "text/xml");
+        const ncxDir = tocPath.includes('/') ? tocPath.substring(0, tocPath.lastIndexOf('/') + 1) : '';
+        ncxDoc.querySelectorAll('navPoint').forEach(p => {
+          const src = p.querySelector('content').getAttribute('src').split('#')[0];
+          const fullRelPath = resolvePath(ncxDir, src);
+          const idx = currentSpine.findIndex(s => s.fullPath === fullRelPath);
+          const label = p.querySelector('navLabel text').textContent.trim();
+          if (idx !== -1) currentTOC.push({ label, index: idx });
+        });
+      }
+    }
+    renderTOC();
+
+    // RENDER SPINES
     container.innerHTML = '';
     for (let i = 0; i < currentSpine.length; i++) {
-      const chapterDiv = document.createElement('div');
-      chapterDiv.className = 'epub-chapter';
-      chapterDiv.dataset.index = i;
-      chapterDiv.id = 'chapter-' + i;
-      chapterDiv.innerHTML = `<div style="text-align:center; font-style:italic; border-bottom:1px solid #ddd; margin: 4rem 0 2rem; padding-bottom:1rem; opacity:0.3;">Loading chapter ${i+1}...</div>`;
-      container.appendChild(chapterDiv);
+      const div = document.createElement('div');
+      div.className = 'epub-chapter';
+      div.id = 'chapter-' + i;
+      div.dataset.index = i;
+      div.innerHTML = `<div style="text-align:center; font-style:italic; border-bottom:1px solid #ddd; margin: 4rem 0 2rem; padding-bottom:1rem; opacity:0.3;">Loading chapter ${i+1}...</div>`;
+      container.appendChild(div);
     }
 
-    // Lazy load chapters
     setupObserver();
     loadAllChapters();
-
-    // Link Interceptor
     container.onclick = e => { if (e.target.tagName === 'A') e.preventDefault(); };
 
   } catch(e) { container.innerHTML = 'Error: ' + e.message; }
@@ -500,25 +591,23 @@ async function loadAllChapters() {
       const html = await currentZip.file(item.fullPath).async("string");
       const doc = new DOMParser().parseFromString(html, "text/html");
       const dir = item.fullPath.includes('/') ? item.fullPath.substring(0, item.fullPath.lastIndexOf('/') + 1) : '';
-
-      // Fix Images
       const imgs = doc.querySelectorAll('img, image');
       for (const img of imgs) {
         let src = img.getAttribute('src') || img.getAttribute('xlink:href');
         if (src && !src.startsWith('http')) {
           const path = resolvePath(dir, src);
-          const zipFile = currentZip.file(path);
-          if (zipFile) {
-            const blob = await zipFile.async("blob");
-            const url = URL.createObjectURL(blob);
-            blobUrls.push(url);
-            if (img.tagName.toLowerCase() === 'image') img.setAttribute('xlink:href', url);
-            else img.src = url;
+          const f = currentZip.file(path);
+          if (f) {
+            const b = await f.async("blob");
+            const u = URL.createObjectURL(b);
+            blobUrls.push(u);
+            if (img.tagName.toLowerCase() === 'image') img.setAttribute('xlink:href', u);
+            else img.src = u;
           }
         }
       }
       div.innerHTML = doc.body.innerHTML;
-    } catch(e) { div.innerHTML = '<p>Chapter failed to load.</p>'; }
+    } catch(e) { div.innerHTML = '<p>Fail.</p>'; }
   }
 }
 
@@ -536,11 +625,29 @@ function setupObserver() {
     let best = null;
     entries.forEach(e => { if (e.isIntersecting && (!best || e.intersectionRatio > best.intersectionRatio)) best = e; });
     if (best) {
-      const index = parseInt(best.target.dataset.index);
-      document.getElementById('reader-progress').textContent = `Chapter ${index + 1} of ${currentSpine.length}`;
+      const idx = parseInt(best.target.dataset.index);
+      document.getElementById('reader-progress').textContent = `Ch ${idx+1} of ${currentSpine.length}`;
     }
   }, { threshold: [0, 0.1, 0.5, 0.9] });
-  document.querySelectorAll('.epub-chapter').forEach(div => observer.observe(div));
+  document.querySelectorAll('.epub-chapter').forEach(d => observer.observe(d));
+}
+
+// ── TOC & NAV ──
+function renderTOC() {
+  const list = document.getElementById('toc-list');
+  list.innerHTML = currentTOC.map(t => `<div class="toc-item" onclick="jumpToChapter(${t.index})">${esc(t.label)}</div>`).join('');
+  if (currentTOC.length === 0) list.innerHTML = '<div style="padding:1.5rem; color:#888;">No table of contents found.</div>';
+}
+
+function toggleTOC(show) {
+  document.getElementById('toc-drawer').classList.toggle('open', show);
+  document.getElementById('toc-overlay').classList.toggle('show', show);
+}
+
+function jumpToChapter(idx) {
+  toggleTOC(false);
+  const el = document.getElementById('chapter-' + idx);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
 function changeFontSize(delta) {
@@ -553,6 +660,7 @@ function closeReader() {
   document.getElementById('pdf-frame').src = '';
   document.getElementById('epub-container').innerHTML = '';
   document.getElementById('epub-content-area').style.display = 'none';
+  toggleTOC(false);
   blobUrls.forEach(URL.revokeObjectURL);
   blobUrls = []; currentZip = null;
 }
@@ -566,10 +674,10 @@ function setFilter(t, b) { activeFilter = t; document.querySelectorAll('.filter-
 function filterBooks() { applyFilters(); }
 function applyFilters() {
   const q = document.getElementById('search').value.toLowerCase();
-  let filtered = allBooks;
-  if (activeFilter !== 'all') filtered = filtered.filter(b => b.format === activeFilter);
-  if (q) filtered = filtered.filter(b => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q));
-  renderBooks(filtered);
+  let f = allBooks;
+  if (activeFilter !== 'all') f = f.filter(b => b.format === activeFilter);
+  if (q) f = f.filter(b => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q));
+  renderBooks(f);
 }
 </script>
 </body>
