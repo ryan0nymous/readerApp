@@ -659,7 +659,7 @@ async function getFilesInFolder(folderId) {
   do {
     let url = `https://www.googleapis.com/drive/v3/files?` +
       `q=${encodeURIComponent(`'${folderId}' in parents and trashed=false`)}` +
-      `&fields=nextPageToken,files(id,name,mimeType,parents)` +
+      `&fields=nextPageToken,files(id,name,mimeType,parents,thumbnailLink)` +
       `&pageSize=1000`;
     if (pageToken) url += `&pageToken=${pageToken}`;
     const data = await driveRequest(url);
@@ -726,6 +726,7 @@ async function loadLibrary() {
         title: meta.title,
         author: meta.author,
         format: ext,
+        thumbnailLink: f.thumbnailLink || null,
       };
     });
 
@@ -756,13 +757,22 @@ function renderBooks(books) {
     return;
   }
 
-  list.innerHTML = books.map(b => `
+  list.innerHTML = books.map(b => {
+    // Build cover: thumbnail image if available, otherwise text placeholder
+    const coverInner = b.thumbnailLink
+      ? `<img src="${escAttr(b.thumbnailLink)}&access_token=${encodeURIComponent(accessToken)}"
+              alt="${escAttr(b.title)}"
+              loading="lazy"
+              onerror="this.parentNode.innerHTML='<div class=\\'book-cover-placeholder\\'><div class=\\'cover-title\\'>${escHtmlForAttr(b.title)}</div><div class=\\'cover-author\\'>${escHtmlForAttr(b.author)}</div></div><span class=\\'format-badge ${b.format}\\'>${b.format.toUpperCase()}</span>'">`
+      : `<div class="book-cover-placeholder">
+           <div class="cover-title">${escHtml(b.title)}</div>
+           <div class="cover-author">${escHtml(b.author)}</div>
+         </div>`;
+
+    return `
     <div class="book-card" onclick="openBook('${b.id}', '${escHtml(b.title)}', '${b.format}')">
       <div class="book-cover">
-        <div class="book-cover-placeholder">
-          <div class="cover-title">${escHtml(b.title)}</div>
-          <div class="cover-author">${escHtml(b.author)}</div>
-        </div>
+        ${coverInner}
         <span class="format-badge ${b.format}">${b.format.toUpperCase()}</span>
       </div>
       <div class="book-info">
@@ -770,11 +780,22 @@ function renderBooks(books) {
         <div class="book-author">${escHtml(b.author) || '—'}</div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Used inside attribute values (already HTML-attribute context, single-quote safe version)
+function escAttr(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+}
+
+// Used when interpolating into an attribute string that will itself be HTML (onerror handler)
+function escHtmlForAttr(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\\/g,'\\\\');
 }
 
 // ── FILTER / SEARCH ──
