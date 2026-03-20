@@ -164,8 +164,8 @@ function fetchServiceToken(callback) {
                     alert("Auth error from Google: " + JSON.stringify(res)); 
                 }
             },
-            error: function(err) { 
-                alert("Network Error: Could not reach Google Token Server (Status " + err + ")"); 
+            error: function(status, body) { 
+                alert("Status " + status + " Error: " + body); 
             }
         });
     } catch (err) {
@@ -192,7 +192,7 @@ function xhr(opt) {
         var res = x.response;
         if (opt.json && typeof res === 'string') res = JSON.parse(res);
         if (opt.success) opt.success(res);
-      } else { if (opt.error) opt.error(x.status); }
+      } else { if (opt.error) opt.error(x.status, x.responseText); }
     }
   };
   x.send(opt.body);
