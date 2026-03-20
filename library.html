@@ -59,7 +59,7 @@
   #toc-drawer { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: var(--reader-bg); z-index: 1005; transition: 0.3s; display: flex; flex-direction: column; box-shadow: 2px 0 20px rgba(0,0,0,0.1); }
   #toc-drawer.open { left: 0; }
   #toc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1004; display: none; }
-  #toc-overlay.show { display: block; }
+  #toc-overlay.show { display: block; opacity: 1; }
   .toc-header { padding: 1.5rem; border-bottom: 1px solid #d4cdc0; font-family: 'Playfair Display'; color: var(--reader-text); }
   #toc-list { flex: 1; overflow-y: auto; }
   .toc-item { padding: 0.9rem 1.5rem; font-family: 'PT Serif', serif; font-size: 14px; color: #4a443a; cursor: pointer; border-bottom: 1px solid #f0ede8; display: flex; align-items: center; }
@@ -219,7 +219,7 @@ async function recursiveScan(fid, depth=0) {
 async function loadLibrary(force=false) {
   if (!accessToken) return;
   const loading = document.getElementById('loading'), cache = localStorage.getItem(CACHE_KEY);
-  if (cache) { allBooks = JSON.parse(cache); renderBooks(allBooks); if (!force) { log("Cache loaded. Refresh in background..."); } else { loading.style.display='flex'; } } else { loading.style.display='flex'; }
+  if (cache) { allBooks = JSON.parse(cache); renderBooks(allBooks); if (!force) { log("Cache loaded. Refreshing in background..."); } else { loading.style.display='flex'; } } else { loading.style.display='flex'; }
   try {
     const rid = await findFolder(config.folderName || 'CalibreLibrary');
     if (!rid) { log("Root folder not found", "error"); return; }
@@ -235,7 +235,7 @@ async function loadLibrary(force=false) {
 
 function renderBooks(books) {
   const l = document.getElementById('book-list'); document.getElementById('book-count').textContent = books.length + ' books';
-  if (!books.length) { l.innerHTML = '<div style="grid-column:1/-1; padding:4rem; text-align:center; color:var(--muted)">Library empty. Click ⟲ to refresh.</div>'; return; }
+  if (!books.length) { l.innerHTML = '<div style="grid-column:1/-1; padding:4rem; text-align:center; color:var(--muted)">Empty. Search or refresh using ⟲.</div>'; return; }
   l.innerHTML = books.map(b => `<div class="book-card" onclick="openBook('${b.id}', '${esc(b.title)}', '${b.format}')"><div class="book-cover">${b.coverId ? `<img src="https://drive.google.com/thumbnail?id=${b.coverId}&sz=w300" loading="lazy">` : `<div class="book-cover-placeholder"><div>${esc(b.title)}</div></div>`}<div class="format-badge">${b.format}</div></div><div class="book-info"><div class="book-title">${esc(b.title)}</div><div class="book-author">${esc(b.author)}</div></div></div>`).join('');
 }
 
@@ -258,14 +258,18 @@ async function openBook(id, title, format) {
     opfDoc.querySelectorAll('manifest > item').forEach(i => manifest[i.getAttribute('id')] = { href: i.getAttribute('href'), props: i.getAttribute('properties') || '' });
     currentSpine = Array.from(opfDoc.querySelectorAll('spine > itemref')).map(r => ({ fullPath: opfDir + manifest[r.getAttribute('idref')].href }));
     
+    // TOC
     currentTOC = []; let nItem = Object.values(manifest).find(i => i.props.includes('nav'));
     if (nItem) {
       const nPath = opfDir + nItem.href, nDoc = new DOMParser().parseFromString(await currentZip.file(nPath).async("string"), "text/html");
       const nDir = nPath.substring(0, nPath.lastIndexOf('/') + 1);
       nDoc.querySelectorAll('nav[epub\\:type="toc"] a, nav#toc a').forEach(a => {
         const full = resolvePath(nDir, a.getAttribute('href')).split('#')[0];
-        const idx = currentSpine.findIndex(s => s.fullPath === full);
-        if (idx !== -1) currentTOC.push({ label: a.textContent.trim(), index: idx });
+        const res = findFileInZip(currentZip, full);
+        if (res) {
+          const idx = currentSpine.findIndex(s => s.fullPath === res.path);
+          if (idx !== -1) currentTOC.push({ label: a.textContent.trim(), index: idx });
+        }
       });
     } else {
       const sTocId = opfDoc.querySelector('spine').getAttribute('toc');
@@ -275,8 +279,12 @@ async function openBook(id, title, format) {
         nDoc.querySelectorAll('navPoint').forEach(p => {
           const srcNode = p.querySelector('content');
           if (srcNode) {
-            const idx = currentSpine.findIndex(s => s.fullPath === resolvePath(nDir, srcNode.getAttribute('src').split('#')[0]));
-            if (idx !== -1) currentTOC.push({ label: p.querySelector('navLabel text').textContent.trim(), index: idx });
+            const full = resolvePath(nDir, srcNode.getAttribute('src').split('#')[0]);
+            const res = findFileInZip(currentZip, full);
+            if (res) {
+              const idx = currentSpine.findIndex(s => s.fullPath === res.path);
+              if (idx !== -1) currentTOC.push({ label: p.querySelector('navLabel text').textContent.trim(), index: idx });
+            }
           }
         });
       }
@@ -293,6 +301,21 @@ async function openBook(id, title, format) {
   } catch(e) { container.innerHTML = e.message; }
 }
 
+function findFileInZip(zip, path) {
+  // 1. Exact
+  let zf = zip.file(path); if (zf) return { file: zf, path: path, method: 'exact' };
+  // 2. Case-insensitive
+  const lp = path.toLowerCase();
+  for (const n in zip.files) { if (n.toLowerCase() === lp) return { file: zip.files[n], path: n, method: 'case' }; }
+  // 3. Basename (Deep)
+  const bn = path.split('/').pop().toLowerCase();
+  for (const n in zip.files) { 
+    const ln = n.toLowerCase();
+    if (ln.endsWith('/' + bn) || ln === bn) return { file: zip.files[n], path: n, method: 'deep' };
+  }
+  return null;
+}
+
 async function loadAllChapters() {
   for (let i=0; i<currentSpine.length; i++) {
     const item = currentSpine[i], div = document.getElementById('chapter-'+i);
@@ -300,25 +323,26 @@ async function loadAllChapters() {
       const doc = new DOMParser().parseFromString(await currentZip.file(item.fullPath).async("string"), "text/html");
       const dir = item.fullPath.includes('/') ? item.fullPath.substring(0, item.fullPath.lastIndexOf('/') + 1) : '';
       const imgs = doc.querySelectorAll('img, image');
-      let found = 0, missed = 0;
+      let foundCount = 0, missedCount = 0;
       for (const img of imgs) {
         let src = img.getAttribute('src') || img.getAttribute('href') || img.getAttribute('xlink:href');
         if (src && !src.startsWith('http') && !src.startsWith('data:')) {
           try {
             const cleanSrc = decodeURIComponent(src).split('#')[0].split('?')[0];
-            let path = resolvePath(dir, cleanSrc);
-            let zf = currentZip.file(path);
-            if (!zf) { zf = currentZip.file(cleanSrc); if (zf) path = cleanSrc; } // Root Fallback
-            if (zf) { 
-              const url = URL.createObjectURL(await zf.async("blob")); blobUrls.push(url);
+            const relPath = resolvePath(dir, cleanSrc);
+            const res = findFileInZip(currentZip, relPath) || findFileInZip(currentZip, cleanSrc);
+            
+            if (res) {
+              const url = URL.createObjectURL(await res.file.async("blob")); blobUrls.push(url);
+              if (res.method !== 'exact') log(`Recovered asset: ${cleanSrc} via ${res.method}`, "success");
               if (img.tagName.toLowerCase() === 'image') { img.setAttribute('href', url); img.setAttribute('xlink:href', url); }
               else img.setAttribute('src', url);
-              found++;
-            } else { log(`Missing Image: ${path} (src: ${src})`, "error"); missed++; }
+              foundCount++;
+            } else { log(`Missing Asset: ${relPath} (src: ${src})`, "error"); missedCount++; }
           } catch(e){}
         }
       }
-      if (imgs.length > 0) log(`Ch ${i+1}: ${found} images found, ${missed} missing.`, found > 0 ? "success" : "info");
+      if (imgs.length > 0) log(`Ch ${parseInt(i)+1}: ${foundCount} found, ${missedCount} missing.`, foundCount > 0 ? "success" : "info");
       div.innerHTML = doc.body.innerHTML;
     } catch(e) { div.innerHTML = 'Fail.'; }
   }
@@ -343,7 +367,7 @@ function setupObserver() {
 function renderTOC() {
   const l = document.getElementById('toc-list');
   l.innerHTML = currentTOC.map(t => `<div class="toc-item" onclick="jumpToChapter(${t.index})">${esc(t.label)}</div>`).join('');
-  if (!currentTOC.length) l.innerHTML = '<div style="padding:1.5rem; color:#888;">No TOC found.</div>';
+  if (!currentTOC.length) l.innerHTML = '<div style="padding:1.5rem; color:#888;">TOC not found.</div>';
 }
 
 function toggleTOC(show) { document.getElementById('toc-drawer').classList.toggle('open', show); document.getElementById('toc-overlay').classList.toggle('show', show); }
