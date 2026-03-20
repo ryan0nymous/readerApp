@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
 <title>LIBRARY</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root {
@@ -17,7 +17,7 @@
     --accent: #c9a84c;
     --accent2: #7a5c2e;
     --red: #c0392b;
-    --reader-bg: #f5f0e8;
+    --reader-bg: #ffffff;
     --reader-text: #1a1610;
   }
 
@@ -260,58 +260,6 @@
   .format-badge.epub { border-color: var(--accent2); color: var(--accent); }
   .format-badge.pdf { border-color: #4a6741; color: #7ab36e; }
 
-  .book-info {
-    padding: 0.6rem 0.7rem;
-    border-top: 1px solid var(--border);
-  }
-
-  .book-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 11px;
-    color: var(--text);
-    line-height: 1.3;
-    margin-bottom: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .book-author {
-    font-size: 9px;
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* ── LOADING ── */
-  #loading {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4rem;
-    gap: 1rem;
-  }
-
-  .loading-text {
-    color: var(--muted);
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-  }
-
-  .spinner {
-    width: 24px;
-    height: 24px;
-    border: 1px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
   /* ── READER OVERLAY ── */
   #reader-overlay {
     display: none;
@@ -326,9 +274,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.8rem 1.2rem;
-    background: #ede8e0;
-    border-bottom: 1px solid #d4cdc0;
+    padding: 0.6rem 1.2rem;
+    background: #f8f5f0;
+    border-bottom: 1px solid #dcd7cf;
     flex-shrink: 0;
   }
 
@@ -340,134 +288,85 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-right: 1rem;
   }
 
-  .reader-close {
-    background: none;
+  .reader-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .ctrl-btn {
+    background: white;
     border: 1px solid #c4bdb0;
-    color: #6b6358;
+    color: #4a443a;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    padding: 0.3rem 0.8rem;
+    font-size: 11px;
+    padding: 0.3rem 0.7rem;
     cursor: pointer;
     text-transform: uppercase;
-    margin-left: 1rem;
-    flex-shrink: 0;
   }
 
-  #epub-frame {
+  .ctrl-btn:hover { background: #f0ede8; }
+  .ctrl-btn:disabled { opacity: 0.3; cursor: default; }
+
+  #epub-content-area {
     flex: 1;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    padding: 3rem 1.5rem;
+    color: var(--reader-text);
   }
 
   #epub-container {
-    width: 100%;
-    height: calc(100vh - 60px);
-    overflow: hidden;
+    max-width: 700px;
+    margin: 0 auto;
+    font-family: 'PT Serif', serif;
+    font-size: 18px;
+    line-height: 1.7;
   }
+
+  #epub-container h1, #epub-container h2, #epub-container h3 {
+    font-family: 'Playfair Display', serif;
+    margin: 2rem 0 1rem;
+    line-height: 1.2;
+  }
+
+  #epub-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1.5rem auto;
+  }
+
+  #epub-container p { margin-bottom: 1.2rem; }
 
   #pdf-frame {
     flex: 1;
     border: none;
   }
 
-  /* ── CONFIG MODAL ── */
-  #config-modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 2000;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-  }
+  /* ── LOADING & MODALS (Kept from original) ── */
+  #loading { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 4rem; gap: 1rem; }
+  .loading-text { color: var(--muted); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; }
+  .spinner { width: 24px; height: 24px; border: 1px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #config-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-box { background: var(--surface); border: 1px solid var(--border); padding: 2rem; width: 100%; max-width: 480px; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--accent); margin-bottom: 1.5rem; }
+  .field-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; display: block; }
+  .field-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 0.6rem 0.8rem; outline: none; margin-bottom: 1.2rem; }
+  .modal-actions { display: flex; gap: 0.8rem; justify-content: flex-end; margin-top: 0.5rem; }
+  .btn-primary { background: var(--accent); border: none; color: var(--bg); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.5rem; cursor: pointer; }
+  .btn-secondary { background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.5rem; cursor: pointer; }
 
-  .modal-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 2rem;
-    width: 100%;
-    max-width: 480px;
-  }
-
-  .modal-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.2rem;
-    color: var(--accent);
-    margin-bottom: 1.5rem;
-  }
-
-  .field-label {
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.4rem;
-    display: block;
-  }
-
-  .field-input {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    padding: 0.6rem 0.8rem;
-    outline: none;
-    margin-bottom: 1.2rem;
-  }
-
-  .field-input:focus { border-color: var(--accent2); }
-
-  .modal-actions {
-    display: flex;
-    gap: 0.8rem;
-    justify-content: flex-end;
-    margin-top: 0.5rem;
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    border: none;
-    color: var(--bg);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 0.6rem 1.5rem;
-    cursor: pointer;
-  }
-
-  .btn-secondary {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 0.6rem 1.5rem;
-    cursor: pointer;
-  }
-
-  .empty-state {
-    grid-column: 1/-1;
-    text-align: center;
-    padding: 4rem;
-    color: var(--muted);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-  }
-
-  /* Mobile adjustments */
   @media (max-width: 600px) {
     #search { width: 140px; }
     #book-list { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.7rem; padding: 1rem; }
-    .auth-title { font-size: 3rem; }
+    #epub-content-area { padding: 2rem 1rem; }
+    #epub-container { font-size: 16px; }
+    .reader-header { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+    .reader-controls { width: 100%; justify-content: space-between; }
   }
 </style>
 </head>
@@ -489,7 +388,7 @@
   <header>
     <div class="logo">LIBRARY</div>
     <div class="header-right">
-      <input type="search" id="search" placeholder="search titles, authors..." oninput="filterBooks()">
+      <input type="search" id="search" placeholder="search books..." oninput="filterBooks()">
       <button class="sign-out" onclick="signOut()">Sign out</button>
     </div>
   </header>
@@ -513,9 +412,17 @@
 <div id="reader-overlay">
   <div class="reader-header">
     <div class="reader-title" id="reader-title"></div>
-    <button class="reader-close" onclick="closeReader()">✕ Close</button>
+    <div class="reader-controls" id="reader-nav-controls" style="display:none">
+      <button class="ctrl-btn" onclick="changeFontSize(-2)">A-</button>
+      <button class="ctrl-btn" onclick="changeFontSize(2)">A+</button>
+      <div style="width:10px"></div>
+      <button class="ctrl-btn" id="prev-btn" onclick="prevChapter()">Prev</button>
+      <button class="ctrl-btn" id="next-btn" onclick="nextChapter()">Next</button>
+      <button class="ctrl-btn" onclick="closeReader()" style="margin-left:5px; border-color:#888;">✕</button>
+    </div>
+    <button class="ctrl-btn" id="pdf-close" onclick="closeReader()" style="display:none">✕ Close</button>
   </div>
-  <div id="epub-frame" style="display:none">
+  <div id="epub-content-area" style="display:none">
     <div id="epub-container"></div>
   </div>
   <iframe id="pdf-frame" style="display:none"></iframe>
@@ -536,26 +443,26 @@
   </div>
 </div>
 
-<!-- EPUB.JS -->
-<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-
 <script>
-// ── CONFIG ──
+// ── CONFIG & STATE ──
 const CONFIG_KEY = 'library_config';
 const CACHE_KEY = 'library_cache';
 const TOKEN_KEY = 'library_token';
 const TOKEN_TIME_KEY = 'library_token_time';
 let config = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
-
-// ── STATE ──
 let allBooks = [];
 let activeFilter = 'all';
 let accessToken = null;
-let currentBook = null;
+
+// EPUB READER STATE
+let currentZip = null;
+let currentSpine = []; // Array of { id, href, fullPath }
+let currentIndex = 0;
+let blobUrls = [];
+let readerFontSize = 18;
 
 // ── INIT ──
 window.onload = () => {
-  // Check for OAuth callback
   const hash = window.location.hash;
   if (hash.includes('access_token')) {
     const params = new URLSearchParams(hash.substring(1));
@@ -567,393 +474,236 @@ window.onload = () => {
     loadLibrary();
     return;
   }
-
-  // Check stored token
   const stored = localStorage.getItem(TOKEN_KEY);
-  if (stored) {
-    if (checkToken(false)) {
-      accessToken = stored;
-      showApp();
-      loadLibrary();
-    } else {
-      showAuthScreen();
-    }
-    return;
-  }
-
-  // Show auth screen
-  if (config.clientId) {
-    document.getElementById('auth-screen').querySelector('.config-note').innerHTML =
-      'Client ID configured. <a href="#" onclick="showConfig()">Change settings</a>';
+  if (stored && checkToken(false)) {
+    accessToken = stored;
+    showApp();
+    loadLibrary();
   }
 };
 
-/**
- * Validates the current OAuth token.
- * Proactive check against the 55-minute limit (tokens usually last 60 min).
- */
 function checkToken(proactive = true) {
   const token = localStorage.getItem(TOKEN_KEY);
   const time = localStorage.getItem(TOKEN_TIME_KEY);
-  
   if (!token || !time) return false;
-
-  const ageMinutes = (Date.now() - parseInt(time)) / (1000 * 60);
-  if (ageMinutes > 55) {
-    console.log('Token near expiry, re-authenticating...');
+  if ((Date.now() - parseInt(time)) / (1000 * 60) > 55) {
     if (proactive) startAuth();
     return false;
   }
   return true;
 }
 
-function forceReAuth() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(TOKEN_TIME_KEY);
-  startAuth();
-}
-
-// ── CONFIG MODAL ──
-function showConfig() {
-  document.getElementById('cfg-client-id').value = config.clientId || '';
-  document.getElementById('cfg-folder').value = config.folderName || 'CalibreLibrary';
-  document.getElementById('config-modal').style.display = 'flex';
-}
-
-function hideConfig() {
-  document.getElementById('config-modal').style.display = 'none';
-}
-
-function saveConfig() {
-  config.clientId = document.getElementById('cfg-client-id').value.trim();
-  config.folderName = document.getElementById('cfg-folder').value.trim() || 'CalibreLibrary';
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-  hideConfig();
-}
-
-// ── AUTH ──
 function startAuth() {
-  if (!config.clientId) {
-    showConfig();
-    return;
-  }
+  if (!config.clientId) { showConfig(); return; }
   const redirectUri = window.location.href.split('#')[0].split('?')[0];
-  const scope = 'https://www.googleapis.com/auth/drive.readonly';
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?` +
-    `client_id=${encodeURIComponent(config.clientId)}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&response_type=token` +
-    `&scope=${encodeURIComponent(scope)}`;
-  window.location.href = url;
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(config.clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=https://www.googleapis.com/auth/drive.readonly`;
 }
 
 function signOut() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(TOKEN_TIME_KEY);
   localStorage.removeItem(CACHE_KEY);
-  accessToken = null;
-  allBooks = [];
-  showAuthScreen();
-}
-
-// ── UI SWITCHING ──
-function showApp() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-}
-
-function showAuthScreen() {
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
+  location.reload();
 }
 
 // ── DRIVE API ──
 async function driveRequest(url) {
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-  if (res.status === 401) {
-    forceReAuth();
-    throw new Error('Token expired');
-  }
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (res.status === 401) { signOut(); throw new Error('Expired'); }
   return res.json();
 }
 
-async function findFolder(name, parentId = null) {
-  let q = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-  if (parentId) q += ` and '${parentId}' in parents`;
-  const data = await driveRequest(
-    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)`
-  );
+async function findFolder(name) {
+  const data = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`)}&fields=files(id,name)`);
   return data.files && data.files[0] ? data.files[0].id : null;
-}
-
-async function getFilesInFolder(folderId) {
-  let files = [];
-  let pageToken = null;
-  do {
-    let url = `https://www.googleapis.com/drive/v3/files?` +
-      `q=${encodeURIComponent(`'${folderId}' in parents and trashed=false`)}` +
-      `&fields=nextPageToken,files(id,name,mimeType,parents)` +
-      `&pageSize=1000`;
-    if (pageToken) url += `&pageToken=${pageToken}`;
-    const data = await driveRequest(url);
-    files = files.concat(data.files || []);
-    pageToken = data.nextPageToken;
-  } while (pageToken);
-  return files;
 }
 
 async function recursiveScan(folderId, depth = 0) {
   if (depth > 4) return [];
-  const items = await getFilesInFolder(folderId);
+  const data = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`'${folderId}' in parents and trashed=false`)}&fields=files(id,name,mimeType,thumbnailLink)&pageSize=1000`);
+  const items = data.files || [];
   
-  // Find cover.jpg in this folder
   const coverFile = items.find(f => f.name.toLowerCase() === 'cover.jpg');
   const coverId = coverFile ? coverFile.id : null;
 
-  let books = [];
-  const subfolders = items.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-  const files = items.filter(f => {
-    const n = f.name.toLowerCase();
-    return n.endsWith('.epub') || n.endsWith('.pdf');
-  });
+  let books = items.filter(f => f.name.toLowerCase().endsWith('.epub') || f.name.toLowerCase().endsWith('.pdf'))
+    .map(f => ({ id: f.id, filename: f.name, coverId }));
 
-  // Attach coverId to each book file
-  const bookFiles = files.map(f => ({ ...f, coverId }));
-  books = books.concat(bookFiles);
-
-  for (const folder of subfolders) {
-    const sub = await recursiveScan(folder.id, depth + 1);
-    books = books.concat(sub);
+  for (const f of items.filter(f => f.mimeType === 'application/vnd.google-apps.folder')) {
+    books = books.concat(await recursiveScan(f.id, depth + 1));
   }
   return books;
 }
 
-// ── PARSE CALIBRE PATH ──
-// Calibre stores as Author/Title/file — extract metadata from path context
-function parseBookName(filename) {
-  // Remove extension
-  let name = filename.replace(/\.(epub|pdf)$/i, '');
-  // Calibre format: "Title - Author" or just "Title"
-  // Try to split on ' - '
-  const parts = name.split(' - ');
-  if (parts.length >= 2) {
-    return { title: parts[0].trim(), author: parts.slice(1).join(' - ').trim() };
-  }
-  return { title: name.trim(), author: '' };
-}
-
-// ── LOAD LIBRARY ──
 async function loadLibrary() {
-  const loading = document.getElementById('loading');
-  
-  // Proactive token check before scanning
-  if (!checkToken()) return;
-
-  // Try loading from cache first
   const cached = localStorage.getItem(CACHE_KEY);
-  if (cached) {
-    try {
-      allBooks = JSON.parse(cached);
-      renderBooks(allBooks);
-    } catch(e) { console.error('Cache corrupt', e); }
-  } else {
-    loading.style.display = 'flex';
-  }
-
+  if (cached) { allBooks = JSON.parse(cached); renderBooks(allBooks); }
+  
   try {
-    setLoadingText('Scanning for changes...');
-    const folderId = await findFolder(config.folderName || 'CalibreLibrary');
-    if (!folderId) {
-      setLoadingText(`Folder "${config.folderName}" not found in Drive`);
-      loading.style.display = 'flex';
-      return;
-    }
-
-    const files = await recursiveScan(folderId);
-
+    const rootId = await findFolder(config.folderName || 'CalibreLibrary');
+    if (!rootId) return;
+    const files = await recursiveScan(rootId);
     allBooks = files.map(f => {
-      const ext = f.name.split('.').pop().toLowerCase();
-      const meta = parseBookName(f.name);
-      return {
-        id: f.id,
-        filename: f.name,
-        title: meta.title,
-        author: meta.author,
-        format: ext,
-        coverId: f.coverId || null,
-      };
-    });
-
-    // Sort by title
-    allBooks.sort((a, b) => a.title.localeCompare(b.title));
-
-    // Save to cache
+      const ext = f.filename.split('.').pop().toLowerCase();
+      const parts = f.filename.replace(/\.(epub|pdf)$/i, '').split(' - ');
+      return { id: f.id, title: parts[0].trim(), author: parts[1] ? parts[1].trim() : '', format: ext, coverId: f.coverId };
+    }).sort((a,b) => a.title.localeCompare(b.title));
     localStorage.setItem(CACHE_KEY, JSON.stringify(allBooks));
-
-    loading.style.display = 'none';
     renderBooks(allBooks);
-  } catch (e) {
-    if (e.message !== 'Token expired') {
-      setLoadingText('Error loading library. Try signing out and back in.');
-      loading.style.display = 'flex';
-      console.error(e);
-    }
-  }
+  } catch(e) {}
 }
 
-function setLoadingText(t) {
-  document.getElementById('loading-text').textContent = t;
-}
-
-// ── RENDER ──
 function renderBooks(books) {
   const list = document.getElementById('book-list');
   document.getElementById('book-count').textContent = `${books.length} titles`;
+  list.innerHTML = books.map(b => `
+    <div class="book-card" onclick="openBook('${b.id}', '${esc(b.title)}', '${b.format}')">
+      <div class="book-cover">
+        ${b.coverId ? `<img src="https://drive.google.com/thumbnail?id=${b.coverId}&sz=w200" loading="lazy">` : `<div class="book-cover-placeholder"><div>${esc(b.title)}</div></div>`}
+        <span class="format-badge ${b.format}">${b.format}</span>
+      </div>
+      <div class="book-info">
+        <div class="book-title">${esc(b.title)}</div>
+        <div class="book-author">${esc(b.author)}</div>
+      </div>
+    </div>
+  `).join('');
+}
 
-  if (books.length === 0) {
-    list.innerHTML = '<div class="empty-state">No books found</div>';
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── CUSTOM EPUB READER (JSZIP) ──
+async function openBook(fileId, title, format) {
+  if (!checkToken()) return;
+  document.getElementById('reader-title').textContent = title;
+  document.getElementById('reader-overlay').style.display = 'flex';
+  
+  if (format === 'pdf') {
+    document.getElementById('pdf-frame').src = `https://drive.google.com/file/d/${fileId}/preview`;
+    document.getElementById('pdf-frame').style.display = 'block';
+    document.getElementById('pdf-close').style.display = 'block';
     return;
   }
 
-  list.innerHTML = books.map(b => {
-    // Build cover: sibling cover.jpg thumbnail if available, otherwise text placeholder
-    const coverInner = b.coverId
-      ? `<img src="https://drive.google.com/thumbnail?id=${b.coverId}&sz=w200"
-              alt="${escAttr(b.title)}"
-              loading="lazy"
-              onerror="this.parentNode.innerHTML='<div class=\\'book-cover-placeholder\\'><div class=\\'cover-title\\'>${escHtmlForAttr(b.title)}</div><div class=\\'cover-author\\'>${escHtmlForAttr(b.author)}</div></div><span class=\\'format-badge ${b.format}\\'>${b.format.toUpperCase()}</span>'">`
-      : `<div class="book-cover-placeholder">
-           <div class="cover-title">${escHtml(b.title)}</div>
-           <div class="cover-author">${escHtml(b.author)}</div>
-         </div>`;
+  // EPUB Logic
+  document.getElementById('epub-content-area').style.display = 'block';
+  document.getElementById('reader-nav-controls').style.display = 'flex';
+  const container = document.getElementById('epub-container');
+  container.innerHTML = 'Unzipping...';
 
-    return `
-    <div class="book-card" onclick="openBook('${b.id}', '${escHtml(b.title)}', '${b.format}')">
-      <div class="book-cover">
-        ${coverInner}
-        <span class="format-badge ${b.format}">${b.format.toUpperCase()}</span>
-      </div>
-      <div class="book-info">
-        <div class="book-title">${escHtml(b.title)}</div>
-        <div class="book-author">${escHtml(b.author) || '—'}</div>
-      </div>
-    </div>
-  `;
-  }).join('');
+  try {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const buffer = await res.arrayBuffer();
+    currentZip = await JSZip.loadAsync(buffer);
+    
+    // 1. Find OPF
+    const containerXml = await currentZip.file("META-INF/container.xml").async("string");
+    const opfPath = containerXml.match(/full-path="([^"]+)"/)[1];
+    const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+    const opfXml = await currentZip.file(opfPath).async("string");
+    
+    // 2. Parse OPF Spine
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(opfXml, "text/xml");
+    const manifest = {};
+    xmlDoc.querySelectorAll('manifest > item').forEach(item => {
+      manifest[item.getAttribute('id')] = item.getAttribute('href');
+    });
+    
+    currentSpine = [];
+    xmlDoc.querySelectorAll('spine > itemref').forEach(ref => {
+      const id = ref.getAttribute('idref');
+      const href = manifest[id];
+      currentSpine.push({ id, href, fullPath: opfDir + href });
+    });
+
+    currentIndex = 0;
+    renderChapter();
+  } catch(e) { container.innerHTML = 'Error: ' + e.message; }
 }
 
-function escHtml(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+async function renderChapter() {
+  const container = document.getElementById('epub-container');
+  const item = currentSpine[currentIndex];
+  if (!item) return;
 
-// Used inside attribute values (already HTML-attribute context, single-quote safe version)
-function escAttr(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-}
+  container.innerHTML = 'Loading chapter...';
+  document.getElementById('epub-content-area').scrollTop = 0;
+  
+  // Cleanup old blobs
+  blobUrls.forEach(url => URL.revokeObjectURL(url));
+  blobUrls = [];
 
-// Used when interpolating into an attribute string that will itself be HTML (onerror handler)
-function escHtmlForAttr(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\\/g,'\\\\');
-}
+  try {
+    const html = await currentZip.file(item.fullPath).async("string");
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const chapterDir = item.fullPath.includes('/') ? item.fullPath.substring(0, item.fullPath.lastIndexOf('/') + 1) : '';
 
-// ── FILTER / SEARCH ──
-function setFilter(type, btn) {
-  activeFilter = type;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  applyFilters();
-}
-
-function filterBooks() { applyFilters(); }
-
-function applyFilters() {
-  const q = document.getElementById('search').value.toLowerCase();
-  let books = allBooks;
-  if (activeFilter !== 'all') books = books.filter(b => b.format === activeFilter);
-  if (q) books = books.filter(b =>
-    b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q)
-  );
-  renderBooks(books);
-}
-
-// ── OPEN BOOK ──
-async function openBook(fileId, title, format) {
-  // Proactive token check before opening
-  if (!checkToken()) return;
-
-  document.getElementById('reader-title').textContent = title;
-  document.getElementById('reader-overlay').style.display = 'flex';
-  document.getElementById('epub-frame').style.display = 'none';
-  document.getElementById('pdf-frame').style.display = 'none';
-
-  if (format === 'pdf') {
-    // For PDF: use Google Drive viewer (works great on iOS Safari)
-    const viewerUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-    const frame = document.getElementById('pdf-frame');
-    frame.src = viewerUrl;
-    frame.style.display = 'block';
-  } else {
-    // For EPUB: fetch and render with epub.js
-    document.getElementById('epub-frame').style.display = 'block';
-    const container = document.getElementById('epub-container');
-    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#888;font-family:monospace;font-size:12px;">Loading book...</div>';
-
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      
-      if (res.status === 401) {
-          forceReAuth();
-          throw new Error('OAuth token expired. Redirecting to sign-in...');
+    // Fix images
+    const images = doc.querySelectorAll('img, image');
+    for (const img of images) {
+      let src = img.getAttribute('src') || img.getAttribute('xlink:href');
+      if (src && !src.startsWith('http')) {
+        const fullPath = resolvePath(chapterDir, src);
+        const file = currentZip.file(fullPath);
+        if (file) {
+          const blob = await file.async("blob");
+          const url = URL.createObjectURL(blob);
+          blobUrls.push(url);
+          if (img.tagName.toLowerCase() === 'image') img.setAttribute('xlink:href', url);
+          else img.src = url;
+        }
       }
-
-      const blob = await res.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-
-      container.innerHTML = '';
-
-      if (currentBook) { try { currentBook.destroy(); } catch(e) {} }
-
-      if (typeof ePub === 'undefined') {
-          throw new Error('EPUB library failed to load. Please check your internet connection and reload.');
-      }
-
-      currentBook = ePub(arrayBuffer);
-      const rendition = currentBook.renderTo(container, {
-        width: '100%',
-        height: '100%',
-        flow: "scrolled-doc",
-        allowScriptedContent: true
-      });
-      rendition.display();
-
-      // Swipe / arrow key navigation
-      rendition.on('keyup', e => {
-        if (e.key === 'ArrowRight') rendition.next();
-        if (e.key === 'ArrowLeft') rendition.prev();
-      });
-
-      container.addEventListener('click', e => {
-        const w = container.offsetWidth;
-        if (e.clientX > w * 0.6) rendition.next();
-        else if (e.clientX < w * 0.4) rendition.prev();
-      });
-
-    } catch(e) {
-      container.innerHTML = `<div style="padding:2rem;color:#c0392b;font-family:monospace;font-size:12px;">Failed to load book. ${e.message}</div>`;
     }
+
+    container.innerHTML = doc.body.innerHTML;
+    container.style.fontSize = readerFontSize + 'px';
+    
+    document.getElementById('prev-btn').disabled = currentIndex === 0;
+    document.getElementById('next-btn').disabled = currentIndex === currentSpine.length - 1;
+  } catch(e) { container.innerHTML = 'Render error: ' + e.message; }
+}
+
+function resolvePath(base, rel) {
+  const stack = base.split("/").filter(p => p !== '');
+  stack.pop(); // remove filename/dir if base is current file's dir
+  const parts = rel.split("/");
+  for (const part of parts) {
+    if (part === ".") continue;
+    if (part === "..") stack.pop();
+    else stack.push(part);
   }
+  return stack.join("/");
+}
+
+function prevChapter() { if (currentIndex > 0) { currentIndex--; renderChapter(); } }
+function nextChapter() { if (currentIndex < currentSpine.length - 1) { currentIndex++; renderChapter(); } }
+
+function changeFontSize(delta) {
+  readerFontSize = Math.max(12, Math.min(40, readerFontSize + delta));
+  document.getElementById('epub-container').style.fontSize = readerFontSize + 'px';
 }
 
 function closeReader() {
   document.getElementById('reader-overlay').style.display = 'none';
   document.getElementById('pdf-frame').src = '';
-  if (currentBook) { try { currentBook.destroy(); } catch(e) {} currentBook = null; }
+  document.getElementById('epub-container').innerHTML = '';
+  document.getElementById('epub-content-area').style.display = 'none';
+  document.getElementById('reader-nav-controls').style.display = 'none';
+  document.getElementById('pdf-close').style.display = 'none';
+  blobUrls.forEach(url => URL.revokeObjectURL(url));
+  blobUrls = [];
+  currentZip = null;
 }
+
+// ── MISC UTILS ──
+function showApp() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('app').style.display = 'flex'; }
+function showConfig() { document.getElementById('cfg-client-id').value = config.clientId || ''; document.getElementById('config-modal').style.display = 'flex'; }
+function hideConfig() { document.getElementById('config-modal').style.display = 'none'; }
+function saveConfig() { config.clientId = document.getElementById('cfg-client-id').value.trim(); config.folderName = document.getElementById('cfg-folder').value.trim() || 'CalibreLibrary'; localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); hideConfig(); }
+function setFilter(type, btn) { activeFilter = type; document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); applyFilters(); }
+function filterBooks() { applyFilters(); }
+function applyFilters() { const q = document.getElementById('search').value.toLowerCase(); let books = allBooks; if (activeFilter !== 'all') books = books.filter(b => b.format === activeFilter); if (q) books = books.filter(b => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q)); renderBooks(books); }
 </script>
 </body>
 </html>
