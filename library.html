@@ -8,6 +8,7 @@
 <title>LIBRARY</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/8.0.20/jsrsasign-all-min.js"></script>
 <style>
   :root {
     --bg: #0e0d0b; --surface: #161410; --border: #2a2620; --text: #e8e0d0; --muted: #6b6358;
@@ -116,23 +117,7 @@ var tokenExpiry = 0;
 var currentZip = null, currentSpine = [], currentTOC = [], blobUrls = [], readerFontSize = 17;
 var allBooks = [], activeFilter = 'all';
 
-// BASE64URL & JWT UTILS
-function b64u(str) { return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
-function ab2b64u(buffer) {
-    var binary = ''; var bytes = new Uint8Array(buffer);
-    for (var i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-    return b64u(binary);
-}
-function str2ab(str) {
-    var buf = new ArrayBuffer(str.length); var bufView = new Uint8Array(buf);
-    for (var i = 0, strLen = str.length; i < strLen; i++) bufView[i] = str.charCodeAt(i);
-    return buf;
-}
-function pem2ab(pem) {
-    var b64Lines = pem.replace('-----BEGIN PRIVATE KEY-----', '').replace('-----END PRIVATE KEY-----', '').replace(/[\r\n\s]/g, '');
-    return str2ab(atob(b64Lines));
-}
-
+// JWT UTILS
 function fetchServiceToken(callback) {
     if (accessToken && Date.now() < tokenExpiry - (5 * 60 * 1000)) { if (callback) callback(); return; }
     if (!SERVICE_ACCOUNT_EMAIL || SERVICE_ACCOUNT_EMAIL.indexOf('YOUR_') !== -1) { alert("Please configure Service Account credentials in the HTML file."); return; }
@@ -147,19 +132,14 @@ function fetchServiceToken(callback) {
         "iat": now
     };
 
-    var unsignedToken = b64u(JSON.stringify(header)) + "." + b64u(JSON.stringify(payload));
-    var cryptoObj = window.crypto && (window.crypto.subtle || window.crypto.webkitSubtle);
+    var sHeader = JSON.stringify(header);
+    var sPayload = JSON.stringify(payload);
     
-    if (!cryptoObj) { alert("WebCrypto API is not supported in this browser."); return; }
+    if (typeof KJUR === 'undefined') { alert("Cryptography library (jsrsasign) failed to load."); return; }
 
-    cryptoObj.importKey(
-        'pkcs8', pem2ab(SERVICE_ACCOUNT_PRIVATE_KEY),
-        { name: 'RSASSA-PKCS1-v1_5', hash: { name: 'SHA-256' } },
-        false, ['sign']
-    ).then(function(privateKey) {
-        return cryptoObj.sign({ name: 'RSASSA-PKCS1-v1_5' }, privateKey, str2ab(unsignedToken));
-    }).then(function(signature) {
-        var jwt = unsignedToken + "." + ab2b64u(signature);
+    try {
+        var jwt = KJUR.jws.JWS.sign("RS256", sHeader, sPayload, SERVICE_ACCOUNT_PRIVATE_KEY);
+        
         xhr({
             url: 'https://oauth2.googleapis.com/token',
             method: 'POST',
@@ -175,7 +155,9 @@ function fetchServiceToken(callback) {
             },
             error: function(err) { alert("Token Exchange Failed: " + err); }
         });
-    }).catch(function(err) { alert("WebCrypto signing error: " + err); });
+    } catch (err) {
+        alert("JWT signing error: " + err);
+    }
 }
 
 function apiRequest(opt) {
