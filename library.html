@@ -267,20 +267,26 @@ function generateSyncCode() {
     success: function() { alert("Code Active! Type '" + code + "' on your iPad now."); }
   });
 }
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
 function useSyncCode() {
   var code = document.getElementById('sync-input').value.toUpperCase().trim();
   if (code.length !== 4) { alert("Enter 4-letter code."); return; }
+  diagLog("Sync: Fetching token for '" + code + "'...");
   xhr({
     url: 'https://kvdb.io/' + SYNC_BUCKET + '/' + code,
     method: 'GET',
     success: function(token) {
-        if (!token || token.length < 20) { alert("Invalid or expired code."); return; }
+        if (!token || token.length < 20) { diagLog("Sync: Invalid code.", "orange"); return; }
         accessToken = token;
         tokenExpiry = Date.now() + 3500000;
-        showApp(); loadLibrary();
-        alert("Synced! Library loading...");
+        diagLog("Sync: SUCCESS! Library loading...", "lime");
+        showApp(); loadLibrary(true);
     },
-    error: function() { alert("Sync Failed. Check code."); }
+    error: function() { diagLog("Sync: Code not found.", "red"); }
   });
 }
 
