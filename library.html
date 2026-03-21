@@ -88,7 +88,7 @@ window.onerror = function(msg, url, line) {
     <button class="filter-btn" onclick="setFilter('epub', this)">ePub</button>
     <button class="filter-btn" onclick="setFilter('pdf', this)">PDF</button>
     <button class="ctrl-btn" style="float:right; border:none; opacity:0.6; margin-left: 5px;" onclick="loadLibrary(true)">⟲</button>
-    <button class="ctrl-btn" style="float:right; border:none; opacity:0.6;" onclick="document.getElementById('repair-kit').scrollIntoView({behavior:'smooth'}); document.getElementById('repair-kit').style.borderColor='var(--accent)'">Sync</button>
+    <button class="ctrl-btn" style="float:right; border:none; opacity:0.6;" onclick="generateSyncCode(); document.getElementById('repair-kit').scrollIntoView({behavior:'smooth'}); document.getElementById('repair-kit').style.borderColor='var(--accent)'">Sync</button>
     <span style="color:var(--muted); font-size:10px; float:right; margin-right: 1.5rem; margin-top:5px;" id="book-count"></span>
   </div>
   <div id="loading"><div class="spinner"></div></div>
