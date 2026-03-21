@@ -255,14 +255,14 @@ function startAuth() {
 }
 
 // MAGIC SYNC LITE (via KVDB)
-var SYNC_BUCKET = 'b8262ae3061'; // Random secret bucket
+var SYNC_BUCKET = 'readerAppSync_982b61a'; // Unique bucket
 function generateSyncCode() {
   if (!accessToken) { diagLog("Sync: Please login first!", "orange"); return; }
   var code = Math.random().toString(36).substring(2,6).toUpperCase();
-  diagLog("Sync: Uploading ID '" + code + "'...");
+  diagLog("Sync: Initializing ID '" + code + "'...");
   xhr({
     url: 'https://kvdb.io/' + SYNC_BUCKET + '/' + code,
-    method: 'POST',
+    method: 'PUT',
     body: accessToken,
     success: function() { 
         document.getElementById('sync-code-val').innerText = code;
