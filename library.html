@@ -153,20 +153,31 @@ function fetchServiceToken(callback) {
         var prk = KEYUTIL.getKey(keyStr);
         alert("Trace: Key Ready.");
 
-        var now = Math.floor(Date.now() / 1000) - 10; // tiny buffer
+        var now = Math.floor(Date.now() / 1000) - 120; // 2 min buffer
         var exp = now + 3600;
 
-        // MANUALLY construct to avoid ANY JSON.stringify variations
+        // MANUALLY build the segments for 100% control
         var sHeader = '{"alg":"RS256","typ":"JWT"}';
-        var sPayload = '{"iss":"' + SERVICE_ACCOUNT_EMAIL + '","scope":"https://www.googleapis.com/auth/drive.readonly","aud":"https://www.googleapis.com/oauth2/v4/token","exp":' + exp + ',"iat":' + now + '}';
+        var sPayload = '{"iss":"' + SERVICE_ACCOUNT_EMAIL + '","scope":"https://www.googleapis.com/auth/drive.readonly","aud":"https://oauth2.googleapis.com/token","exp":' + exp + ',"iat":' + now + '}';
 
-        var jwt = KJUR.jws.JWS.sign(null, sHeader, sPayload, prk);
+        // Step-by-step signing
+        var s64Header = KJUR.jws.JWS.encodeString(sHeader);
+        var s64Payload = KJUR.jws.JWS.encodeString(sPayload);
+        var baseStr = s64Header + "." + s64Payload;
         
-        var ps = jwt.split('.');
-        alert("Trace: JWT Built. Sig Part Length: " + ps[2].length);
+        // Sign the base string
+        var sigHex = new KJUR.crypto.Signature({alg: "SHA256withRSA"});
+        sigHex.init(prk);
+        sigHex.updateString(baseStr);
+        var sigVal = sigHex.sign(); // returns hex
+        var sig64u = hextob64u(sigVal);
+        
+        var jwt = baseStr + "." + sig64u;
+        
+        alert("Trace: JWT Built. Sig Len: " + sig64u.length);
         
         xhr({
-            url: 'https://www.googleapis.com/oauth2/v4/token',
+            url: 'https://oauth2.googleapis.com/token',
             method: 'POST',
             body: 'grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=' + jwt,
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
