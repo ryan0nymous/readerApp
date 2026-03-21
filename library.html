@@ -255,21 +255,23 @@ function startAuth() {
 }
 
 // MAGIC SYNC LITE (via KVDB)
-var SYNC_BUCKET = 'readerAppSync_982b61a'; // Unique bucket
+var SYNC_BUCKET = 'b8262ae306143c015880'; // Valid 20-char hex bucket
 function generateSyncCode() {
   if (!accessToken) { diagLog("Sync: Please login first!", "orange"); return; }
   var code = Math.random().toString(36).substring(2,6).toUpperCase();
-  diagLog("Sync: Initializing ID '" + code + "'...");
+  var url = 'https://kvdb.io/' + SYNC_BUCKET + '/' + code;
+  diagLog("Sync: Uploading to " + code + "...");
   xhr({
-    url: 'https://kvdb.io/' + SYNC_BUCKET + '/' + code,
-    method: 'PUT',
+    url: url,
+    method: 'POST',
     body: accessToken,
     success: function() { 
         document.getElementById('sync-code-val').innerText = code;
         document.getElementById('sync-display').style.display = 'block';
         diagLog("Sync: ID '" + code + "' IS ACTIVE", "lime"); 
     },
-    error: function(s) { diagLog("Sync Error: Upload failed (" + s + ")", "red"); }
+    error: function(s) { diagLog("Sync Error: Upload 404. URL: " + url.substring(0,25) + "...", "red"); }
+  });
   });
 }
 
