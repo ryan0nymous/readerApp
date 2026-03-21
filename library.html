@@ -145,31 +145,25 @@ function fetchServiceToken(callback) {
     if (typeof KJUR === 'undefined') { alert("Cryptography library (jsrsasign) failed to load."); return; }
 
     try {
-        var keyStr = SERVICE_ACCOUNT_PRIVATE_KEY;
+        var keyStr = SERVICE_ACCOUNT_PRIVATE_KEY.trim();
         if (keyStr.indexOf('\\n') !== -1) keyStr = keyStr.replace(/\\n/g, '\n');
         
-        if (typeof KJUR === 'undefined') { alert("Cryptography library (jsrsasign) failed to load."); return; }
+        if (typeof KJUR === 'undefined') { alert("jsrsasign failed to load."); return; }
         
         var prk = KEYUTIL.getKey(keyStr);
-        alert("Trace: Secret Key Loaded.");
+        alert("Trace: Key Ready.");
 
-        var now = Math.floor(Date.now() / 1000) - 30; 
+        var now = Math.floor(Date.now() / 1000) - 10; // tiny buffer
         var exp = now + 3600;
 
-        // Minimalist header (sometimes 'typ' causes issues on legacy)
-        var header = { "alg": "RS256" };
-        var payload = {
-            "iss": SERVICE_ACCOUNT_EMAIL,
-            "scope": "https://www.googleapis.com/auth/drive.readonly",
-            "aud": "https://www.googleapis.com/oauth2/v4/token",
-            "exp": exp,
-            "iat": now
-        };
+        // MANUALLY construct to avoid ANY JSON.stringify variations
+        var sHeader = '{"alg":"RS256","typ":"JWT"}';
+        var sPayload = '{"iss":"' + SERVICE_ACCOUNT_EMAIL + '","scope":"https://www.googleapis.com/auth/drive.readonly","aud":"https://www.googleapis.com/oauth2/v4/token","exp":' + exp + ',"iat":' + now + '}';
 
-        var jwt = KJUR.jws.JWS.sign(null, JSON.stringify(header), JSON.stringify(payload), prk);
+        var jwt = KJUR.jws.JWS.sign(null, sHeader, sPayload, prk);
         
-        var parts = jwt.split('.');
-        alert("Trace: JWT Built. Parts IDs: " + parts[0].substring(0,5) + "..." + parts[1].substring(0,5) + "..." + parts[2].substring(0,5));
+        var ps = jwt.split('.');
+        alert("Trace: JWT Built. Sig Part Length: " + ps[2].length);
         
         xhr({
             url: 'https://www.googleapis.com/oauth2/v4/token',
