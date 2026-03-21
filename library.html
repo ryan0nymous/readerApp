@@ -136,8 +136,11 @@ window.onerror = function(msg, url, line) {
      <span id="reader-title" style="margin-left:1rem; font-family:'Playfair Display'; font-size:13px; color:#1a1610;"></span>
   </div>
   <div id="epub-content-area" onscroll="trackProgress()"><div id="epub-container"></div></div>
-  <iframe id="pdf-frame" style="display:none; width:100%; height:100%; border:none"></iframe>
-</div// --- CREDENTIALS & CONFIGURATION ---
+  </div>
+</div>
+
+<script>
+// --- CREDENTIALS & CONFIGURATION ---
 var SERVICE_ACCOUNT_EMAIL = 'library-reader@readerapp-490817.iam.gserviceaccount.com';
 var SERVICE_ACCOUNT_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCo5H9n2aGIXJa7\ncwaU803RsF1IN2/Fx+IZxibWf/GEvJCZ1kNBtnt7bthxBQeURmf14JbR/UryET7x\nW2wmNpmkqOrCJbmhFO1v/nCaYeFZUqNyJmcHe9tAKUY2sPxTknfC3TQQcMTdeWqu\n8+/ffbXMUk3UuFMOJv0JUWtuZOjdytsXqaXz6h1JdY4airHQfEkR7vjJYQi5gOOS\nH92ZI9QYmfZGblgFdENCkq8iDlO/ly0HFEuzsOnCVdVpu3NUQxRVXVcKapQMgv6M\nK2aqnB3TyeboLBaSu/jixRKPb2fxXLH9hJ4wepzy5LkemoVbgBGeM9UK0bdb3lyN\nr/8JDMm5AgMBAAECggEACKktCmWL5cr/tM2dfwpqCXB+nBsxqWYKZ3F0oOfPOhQU\nYzssWESUGPySb1tHa/hfUOnLOin/y6GMRYK/bUc8AkhiP4IBPqwsz+MvoY8W6AZ3\nmL0059qXX/ct4VSan+uBJjZDOvuZcNUO3jlmqeKPrdJjqN6p7a4cqDtrY64bjfIJ\niJDAvFjF/XUC5pzALviDRdpKeeW/Sg/1VYHaguyqA1WCqKL7T2ZJzZnWwxaa/Hwv\n0VT1AkIPro+HoiAK9961SmKUpT++6WrsKFlw52bfb5v3i5mF4ch4bXWVhtwTNgW6\nGUMqjV90ruIwCcDMIQ3OnUmAd+DZVqORS9r+voKRPQKBgQDZm1iuh6bwV9n972uj\nnDMapTSdfre6eO/cK6uUC5bzTTQpoyF1SpndB5DvJe0jAyjASswxy4Qyo0L/bMVF\n63rqVwWHiXWfcyrmXilpsEwyQx1ITrRhn83CNzJCZjW6SvoEXHiLrW4EDGg1hdWN\nIOtAtqJEdKR8pAUnnRzAyk8OHQKBgQDGsN+KUNu5sd6RjJe/tauslAdS6tFvU3Ut\nJZQH/AbMaxMTVbAbDNirhMoAW2UJRXRJPLou4FeuhgZiw5IPLNHm6moXAWmkFxmg\nYFAVtUJHR4RefpK7E57EgrSdvQ0ciDTZxb4alVSJ8cn4Kmz1zXe5Vzrl5BjWIcs7\n4J0ZmvHHTQKBgADuAPr96WCtf2juVO9mA3Hhss/Zcr+BNMUkCp+fTQ3NDqP+5m2x\n2+Zt2diruM+le88WgrjTvcTZnbepp04dK3FE3ekuVSpRO6WwUUz6S9kLIFzmuS6R\nmDd0NOrDtQcOuvK50moGW6n4w5k28SqhMWAdZ6QTO4Cs0rjQmwbX1m6hAoGAEYbG\noTfSugWjoWkqdaG73AROxRSrlstg2bOn5DBqFRwY2arEVw6CClczTmbBedjjkhZG\nQh5N/boa1Bl2R9pnRZxF8XORcwUKoKf+SHvttcXsOj2mCdSIO8Nf1U442tx09QTJ\naSTlCSoH69kqNWCDgBjevCqrui/O8qA0m26chz0CgYEAuLK0pnsmKwFHFKvHmcpk\nKJ2/p+oaNgVwYD2K672/6ba1DJmgaghAkK3heuYHMXAWUrK4QNikGR3xWpIzM7J+\n/zSlkrcxxfTtCGjdaeV+wXtqa5W+qgu8yBnaBIR/8EdB4Aa/lx/KgYXWriN36tdb\n0uxqsRNiIawjclabqsrQPGY=\n-----END PRIVATE KEY-----\n';
 
@@ -149,7 +152,7 @@ try {
     SERVICE_ACCOUNT_EMAIL = j.client_email;
     SERVICE_ACCOUNT_PRIVATE_KEY = j.private_key;
   }
-} catch(e) {}KEY-----\n';
+} catch(e) {}
 var FOLDER_NAME = 'CalibreLibrary';
 var APP_PIN = '1234';
 // -----------------------------------
