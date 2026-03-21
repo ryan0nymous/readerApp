@@ -150,20 +150,25 @@ function fetchServiceToken(callback) {
         
         if (typeof KJUR === 'undefined') { alert("Cryptography library (jsrsasign) failed to load."); return; }
         
-        // Explicitly load the key to verify format
         var prk = KEYUTIL.getKey(keyStr);
-        alert("Trace: Private Key Loaded. Length: " + keyStr.length);
+        alert("Trace: Key Loaded (len " + keyStr.length + ")");
 
-        // Explicitly stringify with NO spaces for maximum Google compatibility
+        var header = { "alg": "RS256", "typ": "JWT" };
+        var now = Math.floor(Date.now() / 1000) - 60; // 60s buffer for clock drift
+        var payload = {
+            "iss": SERVICE_ACCOUNT_EMAIL,
+            "scope": "https://www.googleapis.com/auth/drive.readonly",
+            "aud": "https://oauth2.googleapis.com/token",
+            "exp": now + 3600 + 60,
+            "iat": now
+        };
+
+        alert("Trace: iat=" + now + " (" + new Date(now*1000).toISOString().split('T')[1] + ")");
+
+        // Strict Manual Sign for absolute control
         var sHeader = JSON.stringify(header);
         var sPayload = JSON.stringify(payload);
-        
         var jwt = KJUR.jws.JWS.sign("RS256", sHeader, sPayload, prk);
-        
-        var sigParts = jwt.split('.');
-        if (sigParts.length === 3) {
-            alert("Trace: Signature computed. First 15: " + sigParts[2].substring(0, 15));
-        }
         
         xhr({
             url: 'https://oauth2.googleapis.com/token',
