@@ -257,17 +257,22 @@ function startAuth() {
 // MAGIC SYNC LITE (via KVDB)
 var SYNC_BUCKET = 'b8262ae3061'; // Random secret bucket
 function generateSyncCode() {
-  if (!accessToken) { alert("Please login on laptop first!"); return; }
+  if (!accessToken) { diagLog("Sync: Please login first!", "orange"); return; }
   var code = Math.random().toString(36).substring(2,6).toUpperCase();
-  document.getElementById('sync-code-val').innerText = code;
-  document.getElementById('sync-display').style.display = 'block';
+  diagLog("Sync: Uploading ID '" + code + "'...");
   xhr({
     url: 'https://kvdb.io/' + SYNC_BUCKET + '/' + code,
     method: 'POST',
     body: accessToken,
-    success: function() { alert("Code Active! Type '" + code + "' on your iPad now."); }
+    success: function() { 
+        document.getElementById('sync-code-val').innerText = code;
+        document.getElementById('sync-display').style.display = 'block';
+        diagLog("Sync: ID '" + code + "' IS ACTIVE", "lime"); 
+    },
+    error: function(s) { diagLog("Sync Error: Upload failed (" + s + ")", "red"); }
   });
 }
+
 function showApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -275,19 +280,19 @@ function showApp() {
 
 function useSyncCode() {
   var code = document.getElementById('sync-input').value.toUpperCase().trim();
-  if (code.length !== 4) { alert("Enter 4-letter code."); return; }
-  diagLog("Sync: Fetching token for '" + code + "'...");
+  if (code.length !== 4) { diagLog("Sync: Type 4-letter ID.", "orange"); return; }
+  diagLog("Sync: Connecting to ID '" + code + "'...");
   xhr({
     url: 'https://kvdb.io/' + SYNC_BUCKET + '/' + code,
     method: 'GET',
     success: function(token) {
-        if (!token || token.length < 20) { diagLog("Sync: Invalid code.", "orange"); return; }
+        if (!token || token.length < 20) { diagLog("Sync: ID not found.", "orange"); return; }
         accessToken = token;
         tokenExpiry = Date.now() + 3500000;
-        diagLog("Sync: SUCCESS! Library loading...", "lime");
+        diagLog("Sync: SUCCESS! Loading...", "lime");
         showApp(); loadLibrary(true);
     },
-    error: function() { diagLog("Sync: Code not found.", "red"); }
+    error: function(s) { diagLog("Sync Error: Code not found (" + s + ")", "red"); }
   });
 }
 
