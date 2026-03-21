@@ -92,6 +92,33 @@ window.onerror = function(msg, url, line) {
   </div>
   <div id="loading"><div class="spinner"></div></div>
   <div id="book-list"></div>
+  
+  <div id="repair-kit" style="margin: 3rem auto; max-width: 360px; padding: 1.5rem; background: #1a1814; border: 1px solid var(--border); border-radius: 8px; font-size: 11px; color: var(--muted);">
+    <h3 style="color: var(--accent); margin-bottom: 1rem; text-transform: uppercase;">Repair & Sync</h3>
+    
+    <div style="margin-bottom: 1.5rem;">
+      <p style="margin-bottom: 0.5rem;">1. Fallback Login (Laptop Only)</p>
+      <button class="ctrl-btn" onclick="startAuth()" style="width: 100%; padding: 10px; background: #4285f4; color: white; border: none; border-radius: 4px; font-weight: bold;">Connect Google Drive</button>
+    </div>
+
+    <div style="margin-bottom: 1.5rem; border-top: 1px solid #332d24; padding-top: 1rem;">
+      <p style="margin-bottom: 0.5rem;">2. Magic Sync to iPad</p>
+      <div id="sync-display" style="display:none; background: #000; padding:10px; margin-bottom:10px; text-align:center;">
+        Code: <span id="sync-code-val" style="font-size:24px; color:var(--accent); font-weight:bold; letter-spacing:4px;">----</span>
+      </div>
+      <button class="ctrl-btn" onclick="generateSyncCode()" id="gen-sync-btn" style="width: 100%;">Get iPad Sync ID</button>
+      <div style="margin-top:10px; display:flex; gap:5px;">
+        <input type="text" id="sync-input" placeholder="Type 4-letter ID" style="flex:1; background:#000; color:#fff; border:1px solid #333; padding:5px; text-transform:uppercase;">
+        <button class="ctrl-btn" onclick="useSyncCode()">SyncNow</button>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid #332d24; padding-top: 1rem;">
+      <p style="margin-bottom: 0.5rem;">3. Update Credentials (Paste JSON)</p>
+      <textarea id="json-repair" placeholder="Paste your Google Service Account JSON here..." style="width: 100%; height: 60px; background: #000; color: #51cf66; border: 1px solid #333; font-family: monospace; font-size: 9px; padding: 5px;"></textarea>
+      <button class="ctrl-btn" onclick="applyRepair()" style="width:100%; margin-top:5px; border-color: var(--accent-green);">Apply New Credentials</button>
+    </div>
+  </div>
 </div>
 
 <div id="diag-panel" style="margin: 2rem auto; max-width: 360px; text-align: left; background: #1a1814; border: 1px solid #332d24; padding: 1rem; color: #887e6a; font-family: monospace; font-size: 9px;">
@@ -181,15 +208,72 @@ function fetchServiceToken(callback) {
                     if (callback) callback();
                 } else { 
                     alert("Auth error from Google: " + JSON.stringify(res)); 
+                    document.getElementById('repair-kit').style.display='block';
                 }
             },
             error: function(status, body) { 
                 alert("Status " + status + " Error: " + body); 
+                document.getElementById('repair-kit').style.display='block';
             }
         });
     } catch (err) {
         alert("JWT Library Error: " + err);
     }
+}
+
+// OAUTH FALLBACK (For Laptop)
+function startAuth() {
+  var client_id = prompt("Please confirm your Client ID (from Google Console):", "847253503889-l92p4bngg2ve9ue91m79qf353sk59un9.apps.googleusercontent.com");
+  if (!client_id) return;
+  var url = "https://accounts.google.com/o/oauth2/v2/auth";
+  url += "?client_id=" + client_id;
+  url += "&redirect_uri=" + encodeURIComponent(window.location.origin + window.location.pathname);
+  url += "&response_type=token";
+  url += "&scope=" + encodeURIComponent("https://www.googleapis.com/auth/drive.readonly");
+  window.location.href = url;
+}
+
+// MAGIC SYNC LITE (via KVDB)
+var SYNC_BUCKET = 'b8262ae3061'; // Random secret bucket
+function generateSyncCode() {
+  if (!accessToken) { alert("Please login on laptop first!"); return; }
+  var code = Math.random().toString(36).substring(2,6).toUpperCase();
+  document.getElementById('sync-code-val').innerText = code;
+  document.getElementById('sync-display').style.display = 'block';
+  xhr({
+    url: 'https://kvdb.io/' + SYNC_BUCKET + '/' + code,
+    method: 'POST',
+    body: accessToken,
+    success: function() { alert("Code Active! Type '" + code + "' on your iPad now."); }
+  });
+}
+function useSyncCode() {
+  var code = document.getElementById('sync-input').value.toUpperCase().trim();
+  if (code.length !== 4) { alert("Enter 4-letter code."); return; }
+  xhr({
+    url: 'https://kvdb.io/' + SYNC_BUCKET + '/' + code,
+    method: 'GET',
+    success: function(token) {
+        if (!token || token.length < 20) { alert("Invalid or expired code."); return; }
+        accessToken = token;
+        tokenExpiry = Date.now() + 3500000;
+        showApp(); loadLibrary();
+        alert("Synced! Library loading...");
+    },
+    error: function() { alert("Sync Failed. Check code."); }
+  });
+}
+
+function applyRepair() {
+  var str = document.getElementById('json-repair').value;
+  try {
+    var j = JSON.parse(str);
+    if (j.client_email && j.private_key) {
+        SERVICE_ACCOUNT_EMAIL = j.client_email;
+        SERVICE_ACCOUNT_PRIVATE_KEY = j.private_key;
+        alert("Credentials Updated (Temporary). Try PIN 1234 again.");
+    } else { alert("JSON missing email or key."); }
+  } catch(e) { alert("Parsing Error: " + e); }
 }
 
 function apiRequest(opt) {
