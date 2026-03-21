@@ -160,9 +160,9 @@ function fetchServiceToken(callback) {
         var sHeader = '{"alg":"RS256","typ":"JWT"}';
         var sPayload = '{"iss":"' + SERVICE_ACCOUNT_EMAIL + '","scope":"https://www.googleapis.com/auth/drive.readonly","aud":"https://oauth2.googleapis.com/token","exp":' + exp + ',"iat":' + now + '}';
 
-        // Step-by-step signing
-        var s64Header = KJUR.jws.JWS.encodeString(sHeader);
-        var s64Payload = KJUR.jws.JWS.encodeString(sPayload);
+        // Step-by-step signing using PROVEN global functions
+        var s64Header = utf8tob64u(sHeader);
+        var s64Payload = utf8tob64u(sPayload);
         var baseStr = s64Header + "." + s64Payload;
         
         // Sign the base string
