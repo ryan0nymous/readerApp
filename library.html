@@ -254,12 +254,12 @@ function startAuth() {
   window.location.href = url;
 }
 
-// MAGIC SYNC LITE (via KVDB)
-var SYNC_BUCKET = 'b8262ae306143c015880'; // Valid 20-char hex bucket
+// MAGIC SYNC LITE
+var SYNC_KEY = '6534d2b27a8c4b1e9c1a'; // Unique secret key
 function generateSyncCode() {
   if (!accessToken) { diagLog("Sync: Please login first!", "orange"); return; }
   var code = Math.random().toString(36).substring(2,6).toUpperCase();
-  var url = 'https://kvdb.io/' + SYNC_BUCKET + '/' + code;
+  var url = 'https://api.keyvalue.xyz/' + SYNC_KEY + '/' + code;
   diagLog("Sync: Uploading to " + code + "...");
   xhr({
     url: url,
@@ -282,9 +282,10 @@ function showApp() {
 function useSyncCode() {
   var code = document.getElementById('sync-input').value.toUpperCase().trim();
   if (code.length !== 4) { diagLog("Sync: Type 4-letter ID.", "orange"); return; }
-  diagLog("Sync: Connecting to ID '" + code + "'...");
+  var url = 'https://api.keyvalue.xyz/' + SYNC_KEY + '/' + code;
+  diagLog("Sync: Connecting to " + code + "...");
   xhr({
-    url: 'https://kvdb.io/' + SYNC_BUCKET + '/' + code,
+    url: url,
     method: 'GET',
     success: function(token) {
         if (!token || token.length < 20) { diagLog("Sync: ID not found.", "orange"); return; }
@@ -293,7 +294,7 @@ function useSyncCode() {
         diagLog("Sync: SUCCESS! Loading...", "lime");
         showApp(); loadLibrary(true);
     },
-    error: function(s) { diagLog("Sync Error: Code not found (" + s + ")", "red"); }
+    error: function(s) { diagLog("Sync: Not found (" + s + ")", "red"); }
   });
 }
 
