@@ -259,18 +259,19 @@ var SYNC_PREFIX = 'readerSync_';
 function generateSyncCode() {
   if (!accessToken) { diagLog("Sync: Please login first!", "orange"); return; }
   var code = Math.random().toString(36).substring(2,6).toUpperCase();
-  var url = 'https://keyvalue.imant.nl/v1/key/' + SYNC_PREFIX + code;
+  var url = 'https://api.restful-api.dev/objects';
   diagLog("Sync: Uploading to " + code + "...");
   xhr({
     url: url,
     method: 'POST',
-    body: accessToken,
+    body: JSON.stringify({ name: SYNC_PREFIX + code, data: { token: accessToken } }),
+    headers: { 'Content-Type': 'application/json' },
     success: function() { 
         document.getElementById('sync-code-val').innerText = code;
         document.getElementById('sync-display').style.display = 'block';
         diagLog("Sync: ID '" + code + "' IS ACTIVE", "lime"); 
     },
-    error: function(s) { diagLog("Sync Error: Upload " + s + ". URL: " + url.substring(0,30) + "...", "red"); }
+    error: function(s) { diagLog("Sync Error: Upload " + s + " (DNS Blocked?)", "red"); }
   });
 }
 
@@ -282,14 +283,19 @@ function showApp() {
 function useSyncCode() {
   var code = document.getElementById('sync-input').value.toUpperCase().trim();
   if (code.length !== 4) { diagLog("Sync: Type 4-letter ID.", "orange"); return; }
-  var url = 'https://keyvalue.imant.nl/v1/key/' + SYNC_PREFIX + code;
-  diagLog("Sync: Connecting to " + code + "...");
+  var url = 'https://api.restful-api.dev/objects';
+  diagLog("Sync: Searching for " + code + "...");
   xhr({
     url: url,
     method: 'GET',
-    success: function(token) {
-        if (!token || token.length < 20) { diagLog("Sync: ID not found.", "orange"); return; }
-        accessToken = token;
+    success: function(resp) {
+        var list = JSON.parse(resp);
+        var found = null;
+        for (var i=0; i<list.length; i++) {
+            if (list[i].name === SYNC_PREFIX + code) { found = list[i].data.token; break; }
+        }
+        if (!found) { diagLog("Sync: ID not found.", "orange"); return; }
+        accessToken = found;
         tokenExpiry = Date.now() + 3500000;
         diagLog("Sync: SUCCESS! Loading...", "lime");
         showApp(); loadLibrary(true);
