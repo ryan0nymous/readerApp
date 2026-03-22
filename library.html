@@ -132,6 +132,7 @@ window.onerror = function(msg, url, line) {
     <div>typeof Promise: <span id="st-promise">...</span></div>
     <div>System Time: <span id="st-time">...</span></div>
     <div id="diag-status" style="margin-top:0.5rem; color:var(--accent); font-weight:bold;">READY - Enter PIN above.</div>
+    <div style="margin-top:5px;"><button onclick="diagLog('TEST CLICK OK', 'lime')" style="font-size:9px; background:#444; color:#fff; border:none; padding:2px 5px; cursor:pointer;">[TEST CLICK]</button></div>
     <div id="diag-log" style="height:80px; overflow-y:auto; margin-top:5px; color:#aaa; border-top:1px solid #222; padding-top:5px;"></div>
   </div>
 </div>
@@ -149,9 +150,15 @@ window.onerror = function(msg, url, line) {
 <script>
 function diagLog(msg, color) {
     var d = document.getElementById('diag-status');
-    if (!d) return;
-    d.innerText = msg;
-    if (color) d.style.color = color;
+    if (d) { d.innerText = msg; if (color) d.style.color = color; }
+    var l = document.getElementById('diag-log');
+    if (l) {
+        var div = document.createElement('div');
+        div.innerText = "> " + msg;
+        if (color) div.style.color = color;
+        l.appendChild(div);
+        l.scrollTop = l.scrollHeight;
+    }
     console.log("DIAG: " + msg);
 }
 setInterval(function() {
@@ -523,9 +530,9 @@ function renderBooks(books) {
   var html = '';
   for (var i=0; i<books.length; i++) {
       var b = books[i];
-      html += '<button class="book-card" data-cover-id="'+(b.coverId||'')+'" ' +
+      html += '<button type="button" class="book-card" data-cover-id="'+(b.coverId||'')+'" ' +
               'data-id="'+b.id+'" data-title="'+esc(b.title)+'" data-format="'+b.format+'" ' +
-              'onclick="cardClick(this)" style="cursor:pointer; display:block; width:100%; border:none; text-align:left; background:none; padding:0; color:inherit; position:relative; z-index:9000; pointer-events:auto !important;">' +
+              'onclick="cardClick(this)" style="position:relative; z-index:9000; pointer-events:auto !important;">' +
               '<div class="book-cover"><div class="cover-placeholder" style="padding:1.5rem; text-align:center; height:100%; color:var(--muted); font-size:11px;"><div>'+esc(b.title)+'</div></div>' +
               '<div class="format-badge" style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.8); padding:2px 5px; font-size:9px;">'+b.format+'</div></div>' +
               '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></button>';
