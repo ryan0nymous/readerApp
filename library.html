@@ -689,7 +689,13 @@ function loadChapter(idx) {
                 }
                 
                 if (zipEntry) {
-                    zipEntry.async("blob").then(function(blob) {
+                    zipEntry.async("arraybuffer").then(function(buf) {
+                        var ext = imgPath.split('.').pop().toLowerCase();
+                        var mime = 'image/jpeg';
+                        if (ext === 'png') mime = 'image/png';
+                        else if (ext === 'gif') mime = 'image/gif';
+                        else if (ext === 'svg') mime = 'image/svg+xml';
+                        var blob = new Blob([buf], {type: mime});
                         var url = URL.createObjectURL(blob);
                         if (isSvg) {
                             img.setAttribute('href', url);
