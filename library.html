@@ -597,10 +597,22 @@ function openBook(id, title, format) {
   document.getElementById('reader-title').innerHTML = title;
   document.getElementById('reader-overlay').style.display = 'block';
   if (format === 'pdf') {
-      diagLog("Reader: Loading PDF Preview...");
-      document.getElementById('pdf-frame').src = 'https://drive.google.com/file/d/' + id + '/preview';
-      document.getElementById('pdf-frame').style.display = 'block';
+      diagLog("Reader: Downloading PDF securely...");
+      var pf = document.getElementById('pdf-frame');
+      pf.src = '';
+      pf.style.display = 'block';
       document.getElementById('epub-content-area').style.display = 'none';
+      
+      apiRequest({
+         url: 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media',
+         responseType: 'arraybuffer',
+         success: function(buf) {
+            diagLog("Reader: PDF Ready.", "lime");
+            var blob = new Blob([buf], {type: 'application/pdf'});
+            pf.src = URL.createObjectURL(blob);
+         },
+         error: function(s) { diagLog("PDF Error: " + s, "red"); }
+      });
       return;
   }
   var container = document.getElementById('epub-container'), area = document.getElementById('epub-content-area');
@@ -650,6 +662,46 @@ function loadChapter(idx) {
   currentZip.file(item.fullPath).async("text").then(function(html) {
     var doc = new DOMParser().parseFromString(html, "text/html");
     div.innerHTML = doc.body.innerHTML;
+    
+    // Process internal images
+    var imgs = div.querySelectorAll('img, image');
+    for (var i = 0; i < imgs.length; i++) {
+        (function(img) {
+            var isSvg = img.tagName.toLowerCase() === 'image';
+            var src = isSvg ? (img.getAttribute('href') || img.getAttribute('xlink:href')) : img.getAttribute('src');
+            
+            if (src && src.indexOf('http') !== 0 && src.indexOf('data:') !== 0) {
+                var parts = item.fullPath.split('/');
+                parts.pop();
+                var srcParts = src.split('/');
+                for (var j=0; j<srcParts.length; j++) {
+                    if (srcParts[j] === '..') parts.pop();
+                    else if (srcParts[j] !== '.') parts.push(srcParts[j]);
+                }
+                var imgPath = decodeURIComponent(parts.join('/'));
+                
+                var zipEntry = currentZip.file(imgPath);
+                if (!zipEntry) {
+                    var allFiles = Object.keys(currentZip.files);
+                    for (var k=0; k<allFiles.length; k++) {
+                        if (allFiles[k].toLowerCase() === imgPath.toLowerCase()) { zipEntry = currentZip.files[allFiles[k]]; break; }
+                    }
+                }
+                
+                if (zipEntry) {
+                    zipEntry.async("blob").then(function(blob) {
+                        var url = URL.createObjectURL(blob);
+                        if (isSvg) {
+                            img.setAttribute('href', url);
+                            img.setAttribute('xlink:href', url);
+                        } else {
+                            img.src = url;
+                        }
+                    });
+                }
+            }
+        })(imgs[i]);
+    }
   });
 }
 
