@@ -188,7 +188,7 @@ function fetchServiceToken(callback) {
     var now = Math.floor(Date.now() / 1000);
     var payload = {
         "iss": SERVICE_ACCOUNT_EMAIL,
-        "scope": "https://www.googleapis.com/auth/drive.readonly",
+        "scope": "https://www.googleapis.com/auth/drive",
         "aud": "https://oauth2.googleapis.com/token",
         "exp": now + 3600,
         "iat": now
@@ -211,7 +211,7 @@ function fetchServiceToken(callback) {
         var now = Math.floor(Date.now() / 1000) - 10; 
         var exp = now + 3600;
         var sHeader = '{"alg":"RS256","typ":"JWT"}';
-        var sPayload = '{"iss":"' + SERVICE_ACCOUNT_EMAIL + '","scope":"https://www.googleapis.com/auth/drive.readonly","aud":"https://oauth2.googleapis.com/token","exp":' + exp + ',"iat":' + now + '}';
+        var sPayload = '{"iss":"' + SERVICE_ACCOUNT_EMAIL + '","scope":"https://www.googleapis.com/auth/drive","aud":"https://oauth2.googleapis.com/token","exp":' + exp + ',"iat":' + now + '}';
 
         var jwt = KJUR.jws.JWS.sign("RS256", sHeader, sPayload, prk);
         diagLog("Auth: JWT Built. Exchanging...");
