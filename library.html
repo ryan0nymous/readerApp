@@ -255,7 +255,7 @@ function startAuth() {
 }
 
 // MAGIC SYNC LITE
-var SYNC_PREFIX = 'readerSync_'; // Flat key prefix
+var SYNC_PREFIX = 'readerSync'; // Alphanumeric only
 function generateSyncCode() {
   if (!accessToken) { diagLog("Sync: Please login first!", "orange"); return; }
   var code = Math.random().toString(36).substring(2,6).toUpperCase();
@@ -263,7 +263,7 @@ function generateSyncCode() {
   diagLog("Sync: Uploading to " + code + "...");
   xhr({
     url: url,
-    method: 'POST',
+    method: 'PUT',
     body: accessToken,
     success: function() { 
         document.getElementById('sync-code-val').innerText = code;
