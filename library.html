@@ -519,13 +519,22 @@ function renderBooks(books) {
   var html = '';
   for (var i=0; i<books.length; i++) {
       var b = books[i];
-      html += '<div class="book-card" data-cover-id="'+(b.coverId||'')+'" onclick="openBook(\''+b.id+'\', \''+esc(b.title)+'\', \''+b.format+'\')">' +
+      html += '<div class="book-card" data-cover-id="'+(b.coverId||'')+'" ' +
+              'data-id="'+b.id+'" data-title="'+esc(b.title)+'" data-format="'+b.format+'" ' +
+              'onclick="cardClick(this)" style="cursor:pointer;">' +
               '<div class="book-cover"><div class="cover-placeholder" style="padding:1.5rem; text-align:center; height:100%; color:var(--muted); font-size:11px;"><div>'+esc(b.title)+'</div></div>' +
               '<div class="format-badge" style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.8); padding:2px 5px; font-size:9px;">'+b.format+'</div></div>' +
               '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></div>';
   }
   l.innerHTML = html;
   setTimeout(checkScrollCovers, 100); 
+}
+
+function cardClick(el) {
+    var id = el.getAttribute('data-id');
+    var title = el.getAttribute('data-title');
+    var format = el.getAttribute('data-format');
+    openBook(id, title, format);
 }
 
 var coverBlobs = {};
@@ -573,9 +582,11 @@ function esc(s) {
 }
 
 function openBook(id, title, format) {
+  diagLog("Reader: Opening '" + title + "'...");
   document.getElementById('reader-title').innerHTML = title;
   document.getElementById('reader-overlay').style.display = 'block';
   if (format === 'pdf') {
+      diagLog("Reader: Loading PDF Preview...");
       document.getElementById('pdf-frame').src = 'https://drive.google.com/file/d/' + id + '/preview';
       document.getElementById('pdf-frame').style.display = 'block';
       document.getElementById('epub-content-area').style.display = 'none';
@@ -583,23 +594,29 @@ function openBook(id, title, format) {
   }
   var container = document.getElementById('epub-container'), area = document.getElementById('epub-content-area');
   area.style.display = 'block'; document.getElementById('pdf-frame').style.display = 'none';
-  container.innerHTML = '<div style="text-align:center; padding:2rem">Extracting...</div>'; area.scrollTop = 0;
+  container.innerHTML = '<div style="text-align:center; padding:2rem">Extracting EPUB...</div>'; area.scrollTop = 0;
   
   apiRequest({
     url: 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media',
     responseType: 'arraybuffer',
     success: function(buf) {
+      diagLog("Reader: EPUB Received. Processing ZIP...");
       JSZip.loadAsync(buf).then(function(zip) {
         currentZip = zip;
         zip.file("META-INF/container.xml").async("text").then(function(cXml) {
           var m = cXml.match(/full-path="([^"]+)"/);
+          if (!m) { diagLog("Reader Error: Invalid EPUB (no container)", "red"); return; }
           var opfPath = m[1], opfDir = opfPath.indexOf('/') !== -1 ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
           zip.file(opfPath).async("text").then(function(opfText) {
             var opfDoc = new DOMParser().parseFromString(opfText, "text/xml");
             var manifest = {}; var items = opfDoc.querySelectorAll('item');
             for (var i=0; i<items.length; i++) manifest[items[i].getAttribute('id')] = { href: items[i].getAttribute('href') };
             var refs = opfDoc.querySelectorAll('itemref');
-            currentSpine = []; for (var j=0; j<refs.length; j++) currentSpine.push({ fullPath: opfDir + manifest[refs[j].getAttribute('idref')].href });
+            currentSpine = []; for (var j=0; j<refs.length; j++) {
+                var ref = refs[j].getAttribute('idref');
+                if (manifest[ref]) currentSpine.push({ fullPath: opfDir + manifest[ref].href });
+            }
+            diagLog("Reader: Spine built. Loading " + currentSpine.length + " chapters...");
             container.innerHTML = '';
             for (var n=0; n<currentSpine.length; n++) {
                 var d = document.createElement('div'); d.className='epub-chapter'; d.id='chapter-'+n;
@@ -609,8 +626,9 @@ function openBook(id, title, format) {
             loadAllChapters();
           });
         });
-      });
-    }
+      }, function(e) { diagLog("Reader Error: ZIP Load Failed: " + e, "red"); });
+    },
+    error: function(s) { diagLog("Reader Error: File Download Failed (" + s + ")", "red"); }
   });
 }
 
