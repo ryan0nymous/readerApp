@@ -255,22 +255,22 @@ function startAuth() {
 }
 
 // MAGIC SYNC LITE
-var SYNC_PREFIX = 'readerSync'; // Alphanumeric only
+var SYNC_PREFIX = 'readerSync_';
 function generateSyncCode() {
   if (!accessToken) { diagLog("Sync: Please login first!", "orange"); return; }
   var code = Math.random().toString(36).substring(2,6).toUpperCase();
-  var url = 'https://api.keyvalue.xyz/' + SYNC_PREFIX + code;
+  var url = 'https://keyvalue.imant.nl/v1/key/' + SYNC_PREFIX + code;
   diagLog("Sync: Uploading to " + code + "...");
   xhr({
     url: url,
-    method: 'PUT',
+    method: 'POST',
     body: accessToken,
     success: function() { 
         document.getElementById('sync-code-val').innerText = code;
         document.getElementById('sync-display').style.display = 'block';
         diagLog("Sync: ID '" + code + "' IS ACTIVE", "lime"); 
     },
-    error: function(s) { diagLog("Sync Error: Upload 404. URL: " + url.substring(0,30) + "...", "red"); }
+    error: function(s) { diagLog("Sync Error: Upload " + s + ". URL: " + url.substring(0,30) + "...", "red"); }
   });
 }
 
@@ -282,7 +282,7 @@ function showApp() {
 function useSyncCode() {
   var code = document.getElementById('sync-input').value.toUpperCase().trim();
   if (code.length !== 4) { diagLog("Sync: Type 4-letter ID.", "orange"); return; }
-  var url = 'https://api.keyvalue.xyz/' + SYNC_PREFIX + code;
+  var url = 'https://keyvalue.imant.nl/v1/key/' + SYNC_PREFIX + code;
   diagLog("Sync: Connecting to " + code + "...");
   xhr({
     url: url,
@@ -294,7 +294,7 @@ function useSyncCode() {
         diagLog("Sync: SUCCESS! Loading...", "lime");
         showApp(); loadLibrary(true);
     },
-    error: function(s) { diagLog("Sync: Not found (" + s + ")", "red"); }
+    error: function(s) { diagLog("Sync: Connection error (" + s + ")", "red"); }
   });
 }
 
