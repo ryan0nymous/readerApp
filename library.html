@@ -124,11 +124,15 @@ window.onerror = function(msg, url, line) {
 </div>
 
 <div id="diag-panel" style="margin: 2rem auto; max-width: 360px; text-align: left; background: #1a1814; border: 1px solid #332d24; padding: 1rem; color: #887e6a; font-family: monospace; font-size: 9px;">
-  <div style="color:var(--accent); margin-bottom:0.5rem; border-bottom:1px solid #332d24; text-transform: uppercase;">Diagnostic Board</div>
+  <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #332d24;">
+    <span style="color:var(--accent); text-transform: uppercase;">Surveillance Board</span>
+    <button onclick="localStorage.removeItem('reader_library_cache'); location.reload();" style="background:none; border:none; color:var(--accent-red); cursor:pointer; font-size:9px;">[FORCE RESET]</button>
+  </div>
   <div id="diag-lines">
     <div>typeof Promise: <span id="st-promise">...</span></div>
     <div>System Time: <span id="st-time">...</span></div>
     <div id="diag-status" style="margin-top:0.5rem; color:var(--accent); font-weight:bold;">READY - Enter PIN above.</div>
+    <div id="diag-log" style="height:80px; overflow-y:auto; margin-top:5px; color:#aaa; border-top:1px solid #222; padding-top:5px;"></div>
   </div>
 </div>
 
@@ -519,12 +523,12 @@ function renderBooks(books) {
   var html = '';
   for (var i=0; i<books.length; i++) {
       var b = books[i];
-      html += '<div class="book-card" data-cover-id="'+(b.coverId||'')+'" ' +
+      html += '<button class="book-card" data-cover-id="'+(b.coverId||'')+'" ' +
               'data-id="'+b.id+'" data-title="'+esc(b.title)+'" data-format="'+b.format+'" ' +
-              'onclick="cardClick(this)" style="cursor:pointer;">' +
+              'onclick="cardClick(this)" style="cursor:pointer; display:block; width:100%; border:none; text-align:left; background:none; padding:0; color:inherit; position:relative; z-index:9000; pointer-events:auto !important;">' +
               '<div class="book-cover"><div class="cover-placeholder" style="padding:1.5rem; text-align:center; height:100%; color:var(--muted); font-size:11px;"><div>'+esc(b.title)+'</div></div>' +
               '<div class="format-badge" style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.8); padding:2px 5px; font-size:9px;">'+b.format+'</div></div>' +
-              '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></div>';
+              '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></button>';
   }
   l.innerHTML = html;
   setTimeout(checkScrollCovers, 100); 
@@ -660,6 +664,10 @@ function setFilter(t, b) {
   b.className = 'filter-btn active'; 
   applyFilters(); 
 }
+window.onerror = function(msg, url, line) {
+  diagLog("JS ERROR: " + msg + " (at " + line + ")", "red");
+};
+
 window.onload = function() {
   document.getElementById('st-promise').innerHTML = typeof Promise;
   document.getElementById('st-time').innerHTML = new Date().toUTCString();
