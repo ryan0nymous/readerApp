@@ -519,13 +519,53 @@ function renderBooks(books) {
   var html = '';
   for (var i=0; i<books.length; i++) {
       var b = books[i];
-      var coverUrl = b.coverId ? ('https://www.googleapis.com/drive/v3/files/' + b.coverId + '?alt=media&access_token=' + accessToken) : null;
-      html += '<div class="book-card" onclick="openBook(\''+b.id+'\', \''+esc(b.title)+'\', \''+b.format+'\')">' +
-              '<div class="book-cover">' + (coverUrl ? '<img src="'+coverUrl+'" loading="lazy">' : '<div style="padding:1.5rem; text-align:center; height:100%; color:var(--muted); font-size:11px;"><div>'+esc(b.title)+'</div></div>') +
+      html += '<div class="book-card" data-cover-id="'+(b.coverId||'')+'" onclick="openBook(\''+b.id+'\', \''+esc(b.title)+'\', \''+b.format+'\')">' +
+              '<div class="book-cover"><div class="cover-placeholder" style="padding:1.5rem; text-align:center; height:100%; color:var(--muted); font-size:11px;"><div>'+esc(b.title)+'</div></div>' +
               '<div class="format-badge" style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.8); padding:2px 5px; font-size:9px;">'+b.format+'</div></div>' +
               '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></div>';
   }
   l.innerHTML = html;
+  setTimeout(checkScrollCovers, 100); 
+}
+
+var coverBlobs = {};
+function checkScrollCovers() {
+  var cards = document.getElementsByClassName('book-card');
+  var viewBottom = window.innerHeight + window.pageYOffset;
+  for (var i=0; i<cards.length; i++) {
+      var c = cards[i];
+      var cid = c.getAttribute('data-cover-id');
+      if (cid && !c.getAttribute('data-loaded')) {
+          var rect = c.getBoundingClientRect();
+          if (rect.top < window.innerHeight + 500) { // Fetch if close to view
+              c.setAttribute('data-loaded', 'true');
+              loadCover(c, cid);
+          }
+      }
+  }
+}
+window.onscroll = checkScrollCovers;
+
+function loadCover(card, cid) {
+    if (coverBlobs[cid]) { finalizeCover(card, coverBlobs[cid]); return; }
+    apiRequest({
+        url: 'https://www.googleapis.com/drive/v3/files/' + cid + '?alt=media',
+        responseType: 'blob',
+        success: function(blob) {
+            var url = URL.createObjectURL(blob);
+            coverBlobs[cid] = url;
+            finalizeCover(card, url);
+        }
+    });
+}
+function finalizeCover(card, url) {
+    var placeholder = card.querySelector('.cover-placeholder');
+    if (placeholder) {
+        var img = document.createElement('img');
+        img.src = url; img.style.opacity = '0';
+        img.onload = function() { img.style.opacity = '1'; placeholder.style.display = 'none'; };
+        card.querySelector('.book-cover').appendChild(img);
+    }
 }
 
 function esc(s) { 
