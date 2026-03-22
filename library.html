@@ -367,7 +367,16 @@ function unlockApp() {
 
 function loadLibrary(force) {
   var loading = document.getElementById('loading');
-  if (allBooks.length > 0 && !force) { return; }
+  
+  // 0. Try Cache First
+  var cached = localStorage.getItem('reader_library_cache');
+  if (cached && !force) {
+      allBooks = JSON.parse(cached);
+      renderBooks(allBooks);
+      diagLog("Library: Loaded " + allBooks.length + " books from cache.", "lime");
+      return;
+  }
+
   loading.style.display='block';
   diagLog("Library: Searching for folder '" + FOLDER_NAME + "'...");
   
@@ -379,18 +388,60 @@ function loadLibrary(force) {
           diagLog("Library Error: FOLDER '" + FOLDER_NAME + "' NOT FOUND. Check sharing.", "orange");
           loading.style.display='none'; return; 
       }
-      diagLog("Library: Root found. Deep scanning...");
-      foldersScanned = 0;
-      seenFolders = {}; // Reset folder tracker
-      recursiveScan(data.files[0].id, 0, function(files) {
-        // De-duplicate by ID
-        var unique = [];
-        var seen = {};
+      diagLog("Library: Root found. Checking for FastScan...");
+      
+      // 1. FastScan Phase 1: All books
+      var qBooks = "trashed = false and (mimeType = 'application/pdf' or mimeType = 'application/epub+zip')";
+      apiRequest({
+        url: 'https://www.googleapis.com/drive/v3/files?pageSize=1000&fields=files(id,name,parents)&q=' + encodeURIComponent(qBooks),
+        json: true,
+        success: function(bookResp) {
+            var books = bookResp.files || [];
+            if (books.length < 5) { startDeepScan(data.files[0].id); return; }
+            
+            // 2. FastScan Phase 2: All covers
+            var qCovers = "trashed = false and name = 'cover.jpg'";
+            apiRequest({
+                url: 'https://www.googleapis.com/drive/v3/files?pageSize=1000&fields=files(id,parents)&q=' + encodeURIComponent(qCovers),
+                json: true,
+                success: function(coverResp) {
+                    var covers = coverResp.files || [];
+                    var coverMap = {};
+                    for (var c=0; c<covers.length; c++) {
+                        if (covers[c].parents && covers[c].parents[0]) coverMap[covers[c].parents[0]] = covers[c].id;
+                    }
+                    
+                    diagLog("Library: FastScan MERGED. Found " + books.length + " books.", "lime");
+                    var nb = [];
+                    for (var i=0; i<books.length; i++) {
+                        var f = books[i];
+                        var parts = f.name.replace(/\.(epub|pdf)$/i, '').split(' - ');
+                        var parentId = (f.parents && f.parents[0]) || null;
+                        nb.push({ id: f.id, title: parts[0]||'Untitled', author: parts[1]||'Unknown', format: f.name.split('.').pop().toLowerCase(), coverId: coverMap[parentId] });
+                    }
+                    nb.sort(function(a,b){ return a.title.localeCompare(b.title); });
+                    allBooks = nb; renderBooks(nb); 
+                    localStorage.setItem('reader_library_cache', JSON.stringify(nb));
+                    loading.style.display='none';
+                },
+                error: function() { startDeepScan(data.files[0].id); }
+            });
+        },
+        error: function() { startDeepScan(data.files[0].id); }
+      });
+    },
+    error: function() { diagLog("Drive API Error", "red"); loading.style.display='none'; }
+  });
+}
+
+function startDeepScan(rootId) {
+    var loading = document.getElementById('loading');
+    foldersScanned = 0;
+    seenFolders = {}; 
+    recursiveScan(rootId, 0, function(files) {
+        var unique = []; var seen = {};
         for (var k=0; k<files.length; k++) {
-            if (!seen[files[k].id]) {
-                unique.push(files[k]);
-                seen[files[k].id] = true;
-            }
+            if (!seen[files[k].id]) { unique.push(files[k]); seen[files[k].id] = true; }
         }
         diagLog("Library: Scan Complete. Found " + unique.length + " unique items.", "lime");
         var nb = [];
@@ -400,11 +451,10 @@ function loadLibrary(force) {
             nb.push({ id: f.id, title: parts[0]||'Untitled', author: parts[1]||'Unknown', format: f.name.split('.').pop().toLowerCase(), coverId: f.coverId });
         }
         nb.sort(function(a,b){ return a.title.localeCompare(b.title); });
-        allBooks = nb; renderBooks(nb); loading.style.display='none';
-      });
-    },
-    error: function() { diagLog("Drive API Error", "red"); loading.style.display='none'; }
-  });
+        allBooks = nb; renderBooks(nb);
+        localStorage.setItem('reader_library_cache', JSON.stringify(nb));
+        loading.style.display='none';
+    });
 }
 
 var foldersScanned = 0;
@@ -430,7 +480,6 @@ function recursiveScan(fid, depth, callback) {
       
       if (folders.length === 0) { callback(books); return; }
       
-      // Sequential scan of subfolders with GC breathers
       var results = books;
       var processNext = function(idx) {
         if (idx >= folders.length) { callback(results); return; }
@@ -439,7 +488,7 @@ function recursiveScan(fid, depth, callback) {
               results = results.concat(subFiles);
               processNext(idx + 1);
             });
-        }, 50); // Give browser pulse time
+        }, 50); 
       };
       processNext(0);
     },
