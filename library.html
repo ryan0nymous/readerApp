@@ -254,24 +254,33 @@ function startAuth() {
   window.location.href = url;
 }
 
-// MAGIC SYNC LITE
-var SYNC_PREFIX = 'readerSync_';
+// MAGIC SYNC LITE (via Google Drive)
 function generateSyncCode() {
   if (!accessToken) { diagLog("Sync: Please login first!", "orange"); return; }
   var code = Math.random().toString(36).substring(2,6).toUpperCase();
-  var url = 'https://api.restful-api.dev/objects';
-  diagLog("Sync: Uploading to " + code + "...");
-  xhr({
-    url: url,
+  var filename = 'reader_sync_' + code + '.json';
+  diagLog("Sync: Uploading ID '" + code + "' to Drive...");
+  
+  apiRequest({
+    url: 'https://www.googleapis.com/drive/v3/files',
     method: 'POST',
-    body: JSON.stringify({ name: SYNC_PREFIX + code, data: { token: accessToken } }),
+    body: JSON.stringify({ name: filename, mimeType: 'application/json' }),
     headers: { 'Content-Type': 'application/json' },
-    success: function() { 
-        document.getElementById('sync-code-val').innerText = code;
-        document.getElementById('sync-display').style.display = 'block';
-        diagLog("Sync: ID '" + code + "' IS ACTIVE", "lime"); 
+    json: true,
+    success: function(file) {
+        apiRequest({
+            url: 'https://www.googleapis.com/upload/drive/v3/files/' + file.id + '?uploadType=media',
+            method: 'PATCH',
+            body: accessToken,
+            success: function() {
+                document.getElementById('sync-code-val').innerText = code;
+                document.getElementById('sync-display').style.display = 'block';
+                diagLog("Sync: ID '" + code + "' IS ACTIVE ON DRIVE", "lime"); 
+            },
+            error: function(s) { diagLog("Sync Error: Content upload failed.", "red"); }
+        });
     },
-    error: function(s) { diagLog("Sync Error: Upload " + s + " (DNS Blocked?)", "red"); }
+    error: function(s) { diagLog("Sync Error: File creation failed (" + s + ")", "red"); }
   });
 }
 
@@ -283,24 +292,28 @@ function showApp() {
 function useSyncCode() {
   var code = document.getElementById('sync-input').value.toUpperCase().trim();
   if (code.length !== 4) { diagLog("Sync: Type 4-letter ID.", "orange"); return; }
-  var url = 'https://api.restful-api.dev/objects';
-  diagLog("Sync: Searching for " + code + "...");
-  xhr({
-    url: url,
-    method: 'GET',
+  if (!accessToken) { diagLog("Sync: Login to iPad (Standard Button) first!", "orange"); return; }
+  
+  var filename = 'reader_sync_' + code + '.json';
+  diagLog("Sync: Searching for " + code + " on Drive...");
+  
+  apiRequest({
+    url: 'https://www.googleapis.com/drive/v3/files?q=name%3D%27' + filename + '%27&fields=files(id)',
+    json: true,
     success: function(resp) {
-        var list = JSON.parse(resp);
-        var found = null;
-        for (var i=0; i<list.length; i++) {
-            if (list[i].name === SYNC_PREFIX + code) { found = list[i].data.token; break; }
-        }
-        if (!found) { diagLog("Sync: ID not found.", "orange"); return; }
-        accessToken = found;
-        tokenExpiry = Date.now() + 3500000;
-        diagLog("Sync: SUCCESS! Loading...", "lime");
-        showApp(); loadLibrary(true);
+        if (!resp.files || !resp.files[0]) { diagLog("Sync: ID not found on Drive.", "orange"); return; }
+        apiRequest({
+            url: 'https://www.googleapis.com/drive/v3/files/' + resp.files[0].id + '?alt=media',
+            success: function(token) {
+                accessToken = token;
+                tokenExpiry = Date.now() + 3500000;
+                diagLog("Sync: SUCCESS! Loading...", "lime");
+                showApp(); loadLibrary(true);
+            },
+            error: function(s) { diagLog("Sync: Token download failed.", "red"); }
+        });
     },
-    error: function(s) { diagLog("Sync: Connection error (" + s + ")", "red"); }
+    error: function(s) { diagLog("Sync: Search failed (" + s + ")", "red"); }
   });
 }
 
