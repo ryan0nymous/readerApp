@@ -390,45 +390,61 @@ function loadLibrary(force) {
       }
       diagLog("Library: Root found. Checking for FastScan...");
       
-      // 1. FastScan Phase 1: All books
+      // 1. FastScan Phase 1: All books (Paginated)
       var qBooks = "trashed = false and (mimeType = 'application/pdf' or mimeType = 'application/epub+zip')";
-      apiRequest({
-        url: 'https://www.googleapis.com/drive/v3/files?pageSize=1000&fields=files(id,name,parents)&q=' + encodeURIComponent(qBooks),
-        json: true,
-        success: function(bookResp) {
-            var books = bookResp.files || [];
-            if (books.length < 5) { startDeepScan(data.files[0].id); return; }
-            
-            // 2. FastScan Phase 2: All covers
-            var qCovers = "trashed = false and name = 'cover.jpg'";
-            apiRequest({
-                url: 'https://www.googleapis.com/drive/v3/files?pageSize=1000&fields=files(id,parents)&q=' + encodeURIComponent(qCovers),
-                json: true,
-                success: function(coverResp) {
-                    var covers = coverResp.files || [];
-                    var coverMap = {};
-                    for (var c=0; c<covers.length; c++) {
-                        if (covers[c].parents && covers[c].parents[0]) coverMap[covers[c].parents[0]] = covers[c].id;
-                    }
-                    
-                    diagLog("Library: FastScan MERGED. Found " + books.length + " books.", "lime");
-                    var nb = [];
-                    for (var i=0; i<books.length; i++) {
-                        var f = books[i];
-                        var parts = f.name.replace(/\.(epub|pdf)$/i, '').split(' - ');
-                        var parentId = (f.parents && f.parents[0]) || null;
-                        nb.push({ id: f.id, title: parts[0]||'Untitled', author: parts[1]||'Unknown', format: f.name.split('.').pop().toLowerCase(), coverId: coverMap[parentId] });
-                    }
-                    nb.sort(function(a,b){ return a.title.localeCompare(b.title); });
-                    allBooks = nb; renderBooks(nb); 
-                    localStorage.setItem('reader_library_cache', JSON.stringify(nb));
-                    loading.style.display='none';
-                },
-                error: function() { startDeepScan(data.files[0].id); }
-            });
-        },
-        error: function() { startDeepScan(data.files[0].id); }
-      });
+      var allBooksFound = [];
+      var fetchBooks = function(pageToken) {
+          var url = 'https://www.googleapis.com/drive/v3/files?pageSize=1000&fields=nextPageToken,files(id,name,parents)&q=' + encodeURIComponent(qBooks);
+          if (pageToken) url += '&pageToken=' + pageToken;
+          apiRequest({
+            url: url,
+            json: true,
+            success: function(bookResp) {
+                allBooksFound = allBooksFound.concat(bookResp.files || []);
+                if (bookResp.nextPageToken) { fetchBooks(bookResp.nextPageToken); }
+                else { fetchCovers(); }
+            },
+            error: function() { startDeepScan(data.files[0].id); }
+          });
+      };
+      
+      var coverMap = {};
+      var fetchCovers = function(pageToken) {
+          var qCovers = "trashed = false and name = 'cover.jpg'";
+          var url = 'https://www.googleapis.com/drive/v3/files?pageSize=1000&fields=nextPageToken,files(id,parents)&q=' + encodeURIComponent(qCovers);
+          if (pageToken) url += '&pageToken=' + pageToken;
+          apiRequest({
+            url: url,
+            json: true,
+            success: function(coverResp) {
+                var covers = coverResp.files || [];
+                for (var c=0; c<covers.length; c++) {
+                    if (covers[c].parents && covers[c].parents[0]) coverMap[covers[c].parents[0]] = covers[c].id;
+                }
+                if (coverResp.nextPageToken) { fetchCovers(coverResp.nextPageToken); }
+                else { finalizeMerge(); }
+            },
+            error: function() { finalizeMerge(); }
+          });
+      };
+
+      var finalizeMerge = function() {
+            if (allBooksFound.length < 5) { startDeepScan(data.files[0].id); return; }
+            diagLog("Library: FastScan MERGED. Found " + allBooksFound.length + " books.", "lime");
+            var nb = [];
+            for (var i=0; i<allBooksFound.length; i++) {
+                var f = allBooksFound[i];
+                var parts = f.name.replace(/\.(epub|pdf)$/i, '').split(' - ');
+                var parentId = (f.parents && f.parents[0]) || null;
+                nb.push({ id: f.id, title: parts[0]||'Untitled', author: parts[1]||'Unknown', format: f.name.split('.').pop().toLowerCase(), coverId: coverMap[parentId] });
+            }
+            nb.sort(function(a,b){ return a.title.localeCompare(b.title); });
+            allBooks = nb; renderBooks(nb); 
+            localStorage.setItem('reader_library_cache', JSON.stringify(nb));
+            loading.style.display='none';
+      };
+
+      fetchBooks();
     },
     error: function() { diagLog("Drive API Error", "red"); loading.style.display='none'; }
   });
@@ -512,7 +528,9 @@ function renderBooks(books) {
   l.innerHTML = html;
 }
 
-function esc(s) { return (s||'').split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;'); }
+function esc(s) { 
+  return (s||'').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); 
+}
 
 function openBook(id, title, format) {
   document.getElementById('reader-title').innerHTML = title;
