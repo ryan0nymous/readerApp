@@ -254,7 +254,7 @@ function startAuth() {
   window.location.href = url;
 }
 
-// MAGIC SYNC LITE (via Google Drive)
+// MAGIC SYNC LITE (via Google Drive Metadata)
 function generateSyncCode() {
   if (!accessToken) { diagLog("Sync: Please login first!", "orange"); return; }
   var code = Math.random().toString(36).substring(2,6).toUpperCase();
@@ -264,21 +264,17 @@ function generateSyncCode() {
   apiRequest({
     url: 'https://www.googleapis.com/drive/v3/files',
     method: 'POST',
-    body: JSON.stringify({ name: filename, mimeType: 'application/json' }),
+    body: JSON.stringify({ 
+        name: filename, 
+        mimeType: 'application/json',
+        description: accessToken // Store token in description (30KB limit)
+    }),
     headers: { 'Content-Type': 'application/json' },
     json: true,
     success: function(file) {
-        apiRequest({
-            url: 'https://www.googleapis.com/upload/drive/v3/files/' + file.id + '?uploadType=media',
-            method: 'PATCH',
-            body: accessToken,
-            success: function() {
-                document.getElementById('sync-code-val').innerText = code;
-                document.getElementById('sync-display').style.display = 'block';
-                diagLog("Sync: ID '" + code + "' IS ACTIVE ON DRIVE", "lime"); 
-            },
-            error: function(s) { diagLog("Sync Error: Content upload failed.", "red"); }
-        });
+        document.getElementById('sync-code-val').innerText = code;
+        document.getElementById('sync-display').style.display = 'block';
+        diagLog("Sync: ID '" + code + "' IS ACTIVE ON DRIVE", "lime"); 
     },
     error: function(s) { diagLog("Sync Error: File creation failed (" + s + ")", "red"); }
   });
@@ -298,20 +294,16 @@ function useSyncCode() {
   diagLog("Sync: Searching for " + code + " on Drive...");
   
   apiRequest({
-    url: 'https://www.googleapis.com/drive/v3/files?q=name%3D%27' + filename + '%27&fields=files(id)',
+    url: 'https://www.googleapis.com/drive/v3/files?q=name%3D%27' + filename + '%27&fields=files(id,description)',
     json: true,
     success: function(resp) {
-        if (!resp.files || !resp.files[0]) { diagLog("Sync: ID not found on Drive.", "orange"); return; }
-        apiRequest({
-            url: 'https://www.googleapis.com/drive/v3/files/' + resp.files[0].id + '?alt=media',
-            success: function(token) {
-                accessToken = token;
-                tokenExpiry = Date.now() + 3500000;
-                diagLog("Sync: SUCCESS! Loading...", "lime");
-                showApp(); loadLibrary(true);
-            },
-            error: function(s) { diagLog("Sync: Token download failed.", "red"); }
-        });
+        if (!resp.files || !resp.files[0] || !resp.files[0].description) { 
+            diagLog("Sync: ID not found or empty.", "orange"); return; 
+        }
+        accessToken = resp.files[0].description;
+        tokenExpiry = Date.now() + 3500000;
+        diagLog("Sync: SUCCESS! Loading...", "lime");
+        showApp(); loadLibrary(true);
     },
     error: function(s) { diagLog("Sync: Search failed (" + s + ")", "red"); }
   });
