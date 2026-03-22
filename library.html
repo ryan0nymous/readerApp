@@ -598,10 +598,10 @@ function openBook(id, title, format) {
   document.getElementById('reader-overlay').style.display = 'block';
   if (format === 'pdf') {
       diagLog("Reader: Downloading PDF securely...");
-      var pf = document.getElementById('pdf-frame');
-      pf.src = '';
-      pf.style.display = 'block';
-      document.getElementById('epub-content-area').style.display = 'none';
+      document.getElementById('pdf-frame').style.display = 'none';
+      var container = document.getElementById('epub-container'), area = document.getElementById('epub-content-area');
+      area.style.display = 'block';
+      container.innerHTML = '<div style="text-align:center; padding:4rem;">Downloading PDF securely...</div>';
       
       apiRequest({
          url: 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media',
@@ -609,7 +609,8 @@ function openBook(id, title, format) {
          success: function(buf) {
             diagLog("Reader: PDF Ready.", "lime");
             var blob = new Blob([buf], {type: 'application/pdf'});
-            pf.src = URL.createObjectURL(blob);
+            var url = URL.createObjectURL(blob);
+            container.innerHTML = '<div style="text-align:center; padding:4rem;"><p style="margin-bottom:2rem; color:var(--muted);">Your PDF has been securely decrypted.</p><a href="'+url+'" target="_blank" style="background:#c9a84c; color:#0e0d0b; padding:1rem 2rem; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block; font-family:\\'IBM Plex Mono\\', monospace;">📖 Open Native PDF Viewer</a><p style="margin-top:2rem; font-size:10px; color:var(--muted);">Opens in a new Safari tab for perfect zoom & scrolling.</p></div>';
          },
          error: function(s) { diagLog("PDF Error: " + s, "red"); }
       });
