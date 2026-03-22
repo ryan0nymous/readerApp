@@ -138,10 +138,13 @@ window.onerror = function(msg, url, line) {
 </div>
 
 <div id="reader-overlay">
-  <div style="height:50px; background:#ede8e0; border-bottom:1px solid #d4cdc0; padding:10px;">
-     <button class="ctrl-btn" onclick="closeReader()">✕ Close</button>
-     <span id="reader-progress" style="margin-left:1rem; font-family:'IBM Plex Mono'; font-size:10px; color:#6b6358;"></span>
-     <span id="reader-title" style="margin-left:1rem; font-family:'Playfair Display'; font-size:13px; color:#1a1610;"></span>
+  <div style="height:50px; background:#ede8e0; border-bottom:1px solid #d4cdc0; padding:10px; display:flex; align-items:center;">
+     <button class="ctrl-btn" onclick="closeReader()" style="margin-right:1rem;">✕ Close</button>
+     <select id="chapter-select" onchange="jumpToChapter(this.value)" style="margin-right:1rem; padding:4px 8px; border:1px solid #c4bdb0; border-radius:4px; font-family:'IBM Plex Mono', monospace; font-size:11px; color:#4a443a; background:#fff; max-width:180px; display:none;">
+       <option value="">Jump to Chapter...</option>
+     </select>
+     <span id="reader-progress" style="margin-right:1rem; font-family:'IBM Plex Mono', monospace; font-size:10px; color:#6b6358;"></span>
+     <span id="reader-title" style="font-family:'Playfair Display', serif; font-size:13px; color:#1a1610; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;"></span>
   </div>
   <iframe id="pdf-frame" style="position: absolute; top: 50px; bottom: 0; left: 0; right: 0; width: 100%; height: calc(100% - 50px); border: none; display: none;"></iframe>
   <div id="epub-content-area" onscroll="trackProgress()"><div id="epub-container"></div></div>
@@ -642,10 +645,16 @@ function openBook(id, title, format) {
             }
             diagLog("Reader: Spine built. Loading " + currentSpine.length + " chapters...");
             container.innerHTML = '';
+            var chapterSelect = document.getElementById('chapter-select');
+            chapterSelect.innerHTML = '<option value="">Jump to Chapter...</option>';
+            chapterSelect.style.display = 'inline-block';
             for (var n=0; n<currentSpine.length; n++) {
                 var d = document.createElement('div'); d.className='epub-chapter'; d.id='chapter-'+n;
                 d.innerHTML = '<div style="height:200px"></div>';
                 container.appendChild(d);
+                var opt = document.createElement('option');
+                opt.value = n; opt.innerHTML = 'Chapter ' + (n + 1);
+                chapterSelect.appendChild(opt);
             }
             loadAllChapters();
           });
@@ -721,7 +730,13 @@ function trackProgress() {
 }
 
 function changeFontSize(d) { readerFontSize = Math.max(12, Math.min(30, readerFontSize+d)); document.getElementById('epub-container').style.fontSize = readerFontSize+'px'; }
-function closeReader() { document.getElementById('reader-overlay').style.display='none'; currentZip=null; }
+function jumpToChapter(idx) {
+    if (idx === "") return;
+    var el = document.getElementById('chapter-'+idx);
+    var area = document.getElementById('epub-content-area');
+    if (el && area) area.scrollTop = el.offsetTop;
+}
+function closeReader() { document.getElementById('reader-overlay').style.display='none'; currentZip=null; var cs = document.getElementById('chapter-select'); if(cs) cs.style.display='none'; }
 
 function setFilter(t, b) { 
   activeFilter = t; 
@@ -741,8 +756,6 @@ window.onload = function() {
   if (accessToken) { showApp(); loadLibrary(); }
 };
 function applyFilters() {
-  if (window.config.folderName) document.getElementById('cfg-folder').value = window.config.folderName;
-
   document.getElementById('st-time').innerHTML = new Date().toUTCString();
   
   var q = document.getElementById('search').value.toLowerCase();
