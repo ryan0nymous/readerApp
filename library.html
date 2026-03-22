@@ -386,11 +386,10 @@ function loadLibrary(force) {
   });
 }
 
-var foldersScanned = 0;
 function recursiveScan(fid, depth, callback) {
   if (depth > 6) { callback([]); return; }
   foldersScanned++;
-  if (foldersScanned % 5 === 0) diagLog("Library: Scanned " + foldersScanned + " folders...");
+  if (foldersScanned % 10 === 0) diagLog("Library: Scanning folder #" + foldersScanned + "...");
   
   apiRequest({
     url: 'https://www.googleapis.com/drive/v3/files?q=%27' + fid + '%27%20in%20parents%20and%20trashed%3Dfalse&fields=files(id,name,mimeType)&pageSize=1000',
@@ -404,15 +403,19 @@ function recursiveScan(fid, depth, callback) {
           else if (items[i].mimeType === 'application/vnd.google-apps.folder') folders.push(items[i]);
       }
       for (var j=0; j<books.length; j++) books[j].coverId = coverId;
+      
       if (folders.length === 0) { callback(books); return; }
-      var results = books; var count = 0;
-      for (var k=0; k<folders.length; k++) {
-          recursiveScan(folders[k].id, depth + 1, function(subFiles) { 
-              results = results.concat(subFiles); 
-              count++; 
-              if (count === folders.length) callback(results); 
-          });
-      }
+      
+      // Sequential scan of subfolders to prevent ERR_INSUFFICIENT_RESOURCES
+      var results = books;
+      var processNext = function(idx) {
+        if (idx >= folders.length) { callback(results); return; }
+        recursiveScan(folders[idx].id, depth + 1, function(subFiles) {
+          results = results.concat(subFiles);
+          processNext(idx + 1);
+        });
+      };
+      processNext(0);
     },
     error: function() { callback([]); }
   });
