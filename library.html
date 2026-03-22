@@ -430,14 +430,16 @@ function recursiveScan(fid, depth, callback) {
       
       if (folders.length === 0) { callback(books); return; }
       
-      // Sequential scan of subfolders to prevent ERR_INSUFFICIENT_RESOURCES
+      // Sequential scan of subfolders with GC breathers
       var results = books;
       var processNext = function(idx) {
         if (idx >= folders.length) { callback(results); return; }
-        recursiveScan(folders[idx].id, depth + 1, function(subFiles) {
-          results = results.concat(subFiles);
-          processNext(idx + 1);
-        });
+        setTimeout(function() {
+            recursiveScan(folders[idx].id, depth + 1, function(subFiles) {
+              results = results.concat(subFiles);
+              processNext(idx + 1);
+            });
+        }, 50); // Give browser pulse time
       };
       processNext(0);
     },
@@ -452,8 +454,9 @@ function renderBooks(books) {
   var html = '';
   for (var i=0; i<books.length; i++) {
       var b = books[i];
+      var coverUrl = b.coverId ? ('https://www.googleapis.com/drive/v3/files/' + b.coverId + '?alt=media&access_token=' + accessToken) : null;
       html += '<div class="book-card" onclick="openBook(\''+b.id+'\', \''+esc(b.title)+'\', \''+b.format+'\')">' +
-              '<div class="book-cover">' + (b.coverId ? '<img src="https://drive.google.com/thumbnail?id='+b.coverId+'&sz=w300">' : '<div style="padding:1.5rem; text-align:center; height:100%; color:var(--muted); font-size:11px;"><div>'+esc(b.title)+'</div></div>') +
+              '<div class="book-cover">' + (coverUrl ? '<img src="'+coverUrl+'" loading="lazy">' : '<div style="padding:1.5rem; text-align:center; height:100%; color:var(--muted); font-size:11px;"><div>'+esc(b.title)+'</div></div>') +
               '<div class="format-badge" style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.8); padding:2px 5px; font-size:9px;">'+b.format+'</div></div>' +
               '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></div>';
   }
