@@ -381,11 +381,21 @@ function loadLibrary(force) {
       }
       diagLog("Library: Root found. Deep scanning...");
       foldersScanned = 0;
+      seenFolders = {}; // Reset folder tracker
       recursiveScan(data.files[0].id, 0, function(files) {
-        diagLog("Library: Scan Complete. Found " + files.length + " items.", "lime");
+        // De-duplicate by ID
+        var unique = [];
+        var seen = {};
+        for (var k=0; k<files.length; k++) {
+            if (!seen[files[k].id]) {
+                unique.push(files[k]);
+                seen[files[k].id] = true;
+            }
+        }
+        diagLog("Library: Scan Complete. Found " + unique.length + " unique items.", "lime");
         var nb = [];
-        for (var i=0; i<files.length; i++) {
-            var f = files[i];
+        for (var i=0; i<unique.length; i++) {
+            var f = unique[i];
             var parts = f.name.replace(/\.(epub|pdf)$/i, '').split(' - ');
             nb.push({ id: f.id, title: parts[0]||'Untitled', author: parts[1]||'Unknown', format: f.name.split('.').pop().toLowerCase(), coverId: f.coverId });
         }
@@ -397,8 +407,11 @@ function loadLibrary(force) {
   });
 }
 
+var foldersScanned = 0;
+var seenFolders = {};
 function recursiveScan(fid, depth, callback) {
-  if (depth > 6) { callback([]); return; }
+  if (depth > 8 || seenFolders[fid]) { callback([]); return; }
+  seenFolders[fid] = true;
   foldersScanned++;
   if (foldersScanned % 10 === 0) diagLog("Library: Scanning folder #" + foldersScanned + "...");
   
