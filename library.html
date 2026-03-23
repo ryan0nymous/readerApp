@@ -40,8 +40,10 @@
 
   /* ── READER ── */
   #reader-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; background: #f5f0e8; z-index: 10000; overflow: hidden; }
-  #epub-content-area { position: absolute; top: 50px; bottom: 0; left: 0; right: 0; overflow-y: auto; background: #f5f0e8; -webkit-overflow-scrolling: touch; }
-  #epub-container { max-width: 680px; margin: 0 auto; padding: 2rem 1.5rem 4rem; color: #1a1610; font-family: 'PT Serif', serif; font-size: 17px; line-height: 1.8; }
+  #epub-content-area { position: absolute; top: 50px; bottom: 0; left: 0; right: 0; overflow: hidden; background: #f5f0e8; padding: 20px; box-sizing: border-box; }
+  #epub-container { height: 100%; column-width: calc(100vw - 40px); column-gap: 40px; margin: 0; color: #1a1610; font-family: 'PT Serif', serif; font-size: 17px; line-height: 1.6; }
+  .epub-chapter { -webkit-column-break-before: always; break-before: column; }
+  #epub-container img { max-width: 100%; max-height: calc(100vh - 90px); object-fit: contain; }
   
   #error-monitor { color: #ff6b6b; font-size: 10px; text-align: left; padding: 1rem; border: 1px dashed #ff6b6b; display: none; margin: 2rem auto; max-width: 360px; word-break: break-all; }
   .ctrl-btn { background: #fdfcf9; border: 1px solid #c4bdb0; color: #4a443a; font-size: 11px; padding: 0.5rem 1rem; cursor: pointer; display: inline-block; text-decoration: none; border-radius: 4px; font-weight: bold; }
@@ -765,15 +767,59 @@ function loadChapter(idx) {
   });
 }
 
+var epubTouchStartX = 0;
+document.addEventListener('DOMContentLoaded', function() {
+    var area = document.getElementById('epub-content-area');
+    if (area) {
+        area.addEventListener('touchstart', function(e) {
+            if (e.changedTouches.length > 0) epubTouchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+        area.addEventListener('touchend', function(e) {
+            if (e.changedTouches.length > 0) {
+                var teX = e.changedTouches[0].screenX;
+                var w = window.innerWidth;
+                if (epubTouchStartX - teX > 50) flipPage(1, w);
+                else if (teX - epubTouchStartX > 50) flipPage(-1, w);
+            }
+        }, {passive: true});
+        area.addEventListener('click', function(e) {
+            var w = window.innerWidth;
+            if (e.clientX < w * 0.2) flipPage(-1, w);
+            else if (e.clientX > w * 0.8) flipPage(1, w);
+        });
+    }
+});
+
+function flipPage(dir, w) {
+    var area = document.getElementById('epub-content-area');
+    if (!area) return;
+    var start = area.scrollLeft;
+    var target = Math.max(0, Math.min(start + (dir * w), area.scrollWidth - w));
+    if (target === start) return;
+    var frames = 15, i = 0, step = (target - start) / frames;
+    var anim = setInterval(function() {
+        area.scrollLeft += step;
+        i++;
+        if (i >= frames) { area.scrollLeft = target; clearInterval(anim); trackProgress(); }
+    }, 16);
+}
+
 function trackProgress() {
   var area = document.getElementById('epub-content-area');
   var chapters = document.getElementsByClassName('epub-chapter');
   var found = 0;
-  for (var i=0; i<chapters.length; i++) { if (chapters[i].offsetTop <= area.scrollTop + 60) found = i; }
-  document.getElementById('reader-progress').innerHTML = 'Ch ' + (found + 1) + '/' + currentSpine.length;
+  for (var i=0; i<chapters.length; i++) { if (chapters[i].offsetLeft <= area.scrollLeft + 60) found = i; }
+  var w = window.innerWidth;
+  var totalPages = Math.ceil(area.scrollWidth / w) || 1;
+  var currentPage = Math.round(area.scrollLeft / w) + 1;
+  document.getElementById('reader-progress').innerHTML = 'Ch ' + (found + 1) + ' | Pg ' + currentPage + '/' + totalPages;
 }
 
-function changeFontSize(d) { readerFontSize = Math.max(12, Math.min(30, readerFontSize+d)); document.getElementById('epub-container').style.fontSize = readerFontSize+'px'; }
+function changeFontSize(d) { 
+    readerFontSize = Math.max(12, Math.min(30, readerFontSize+d)); 
+    document.getElementById('epub-container').style.fontSize = readerFontSize+'px'; 
+    setTimeout(trackProgress, 100); 
+}
 
 function toggleToc() {
     var p = document.getElementById('toc-panel');
@@ -798,12 +844,15 @@ function jumpToHref(targetPath) {
         var el = document.getElementById('chapter-'+chapIdx);
         var area = document.getElementById('epub-content-area');
         if (el && area) {
-            var scrollPos = el.offsetTop;
+            var scrollPos = el.offsetLeft;
             if (hash) {
                 var targetEl = el.querySelector('[id="'+hash+'"]') || el.querySelector('[name="'+hash+'"]');
-                if (targetEl) scrollPos += targetEl.offsetTop;
+                if (targetEl) scrollPos += targetEl.offsetLeft;
             }
-            area.scrollTop = scrollPos;
+            var w = window.innerWidth;
+            scrollPos = Math.floor(scrollPos / w) * w;
+            area.scrollLeft = scrollPos;
+            trackProgress();
         }
     } else {
         diagLog("Reader: Could not resolve link target: " + path, "red");
