@@ -193,7 +193,7 @@ var accessToken = null;
 var tokenExpiry = 0;
 var currentZip = null, currentSpine = [], currentTOC = [], blobUrls = [], readerFontSize = 17;
 var allBooks = [], activeFilter = 'all';
-var currentBookId = null, chaptersLoadedCount = 0;
+var currentBookId = null, chaptersLoadedCount = 0, bookIsReady = false;
 
 // JWT UTILS
 function fetchServiceToken(callback) {
@@ -598,6 +598,7 @@ function esc(s) {
 }
 
 function openBook(id, title, format) {
+  bookIsReady = false;
   currentBookId = id;
   diagLog("Reader: Opening '" + title + "'...");
   document.getElementById('reader-title').innerHTML = title;
@@ -778,6 +779,7 @@ function loadChapter(idx) {
                     area.scrollLeft = Math.floor(target / w) * w;
                 }
             }
+            bookIsReady = true;
             trackProgress();
         }, 300);
     }
@@ -822,6 +824,7 @@ function flipPage(dir, w) {
 }
 
 function trackProgress() {
+  if (!bookIsReady) return;
   var area = document.getElementById('epub-content-area');
   var chapters = document.getElementsByClassName('epub-chapter');
   var found = 0;
