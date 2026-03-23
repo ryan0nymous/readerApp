@@ -193,6 +193,7 @@ var accessToken = null;
 var tokenExpiry = 0;
 var currentZip = null, currentSpine = [], currentTOC = [], blobUrls = [], readerFontSize = 17;
 var allBooks = [], activeFilter = 'all';
+var currentBookId = null, chaptersLoadedCount = 0;
 
 // JWT UTILS
 function fetchServiceToken(callback) {
@@ -597,6 +598,7 @@ function esc(s) {
 }
 
 function openBook(id, title, format) {
+  currentBookId = id;
   diagLog("Reader: Opening '" + title + "'...");
   document.getElementById('reader-title').innerHTML = title;
   document.getElementById('reader-overlay').style.display = 'block';
@@ -689,7 +691,7 @@ function openBook(id, title, format) {
   });
 }
 
-function loadAllChapters() { for (var i=0; i<currentSpine.length; i++) loadChapter(i); }
+function loadAllChapters() { chaptersLoadedCount = 0; for (var i=0; i<currentSpine.length; i++) loadChapter(i); }
 
 function loadChapter(idx) {
   var item = currentSpine[idx], div = document.getElementById('chapter-'+idx);
@@ -764,6 +766,21 @@ function loadChapter(idx) {
             })(href);
         }
     }
+    chaptersLoadedCount++;
+    if (chaptersLoadedCount === currentSpine.length) {
+        setTimeout(function() {
+            var area = document.getElementById('epub-content-area');
+            if (area && currentBookId) {
+                var saved = localStorage.getItem('readerProgress_' + currentBookId);
+                if (saved) {
+                    var w = window.innerWidth;
+                    var target = parseFloat(saved) * area.scrollWidth;
+                    area.scrollLeft = Math.floor(target / w) * w;
+                }
+            }
+            trackProgress();
+        }, 300);
+    }
   });
 }
 
@@ -796,7 +813,7 @@ function flipPage(dir, w) {
     var start = area.scrollLeft;
     var target = Math.max(0, Math.min(start + (dir * w), area.scrollWidth - w));
     if (target === start) return;
-    var frames = 15, i = 0, step = (target - start) / frames;
+    var frames = 8, i = 0, step = (target - start) / frames;
     var anim = setInterval(function() {
         area.scrollLeft += step;
         i++;
@@ -813,6 +830,9 @@ function trackProgress() {
   var totalPages = Math.ceil(area.scrollWidth / w) || 1;
   var currentPage = Math.round(area.scrollLeft / w) + 1;
   document.getElementById('reader-progress').innerHTML = 'Ch ' + (found + 1) + ' | Pg ' + currentPage + '/' + totalPages;
+  if (currentBookId && area.scrollWidth > 0) {
+      localStorage.setItem('readerProgress_' + currentBookId, (area.scrollLeft / area.scrollWidth));
+  }
 }
 
 function changeFontSize(d) { 
