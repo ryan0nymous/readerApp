@@ -597,6 +597,18 @@ function esc(s) {
   return (s||'').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); 
 }
 
+function getZipEntry(zip, path) {
+    if (!zip || !path) return null;
+    var e = zip.file(path); if (e) return e;
+    var dec = decodeURIComponent(path);
+    e = zip.file(dec); if (e) return e;
+    var all = Object.keys(zip.files);
+    for (var i=0; i<all.length; i++) {
+        if (all[i].toLowerCase() === path.toLowerCase() || all[i].toLowerCase() === dec.toLowerCase()) return zip.files[all[i]];
+    }
+    return null;
+}
+
 function openBook(id, title, format) {
   bookIsReady = false;
   currentBookId = id;
@@ -638,7 +650,9 @@ function openBook(id, title, format) {
           var m = cXml.match(/full-path="([^"]+)"/);
           if (!m) { diagLog("Reader Error: Invalid EPUB (no container)", "red"); return; }
           var opfPath = m[1], opfDir = opfPath.indexOf('/') !== -1 ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
-          zip.file(opfPath).async("text").then(function(opfText) {
+          var opfEntry = getZipEntry(zip, opfPath);
+          if (!opfEntry) { diagLog("Reader Error: Invalid EPUB (OPF missing)", "red"); return; }
+          opfEntry.async("text").then(function(opfText) {
             var opfDoc = new DOMParser().parseFromString(opfText, "text/xml");
             var manifest = {}; var items = opfDoc.querySelectorAll('item');
             for (var i=0; i<items.length; i++) manifest[items[i].getAttribute('id')] = { href: items[i].getAttribute('href') };
@@ -663,9 +677,10 @@ function openBook(id, title, format) {
             var spineNode = opfDoc.querySelector('spine');
             var ncxId = spineNode ? spineNode.getAttribute('toc') : null;
             var ncxPath = ncxId && manifest[ncxId] ? opfDir + manifest[ncxId].href : null;
+            var ncxEntry = getZipEntry(zip, ncxPath);
             
-            if (ncxPath && zip.file(ncxPath)) {
-                zip.file(ncxPath).async("text").then(function(ncxText) {
+            if (ncxEntry) {
+                ncxEntry.async("text").then(function(ncxText) {
                     var ncxDoc = new DOMParser().parseFromString(ncxText, "text/xml");
                     var navs = ncxDoc.querySelectorAll('navPoint');
                     if (navs.length > 0 && tocBtn && tocPanel) {
@@ -696,7 +711,13 @@ function loadAllChapters() { chaptersLoadedCount = 0; for (var i=0; i<currentSpi
 
 function loadChapter(idx) {
   var item = currentSpine[idx], div = document.getElementById('chapter-'+idx);
-  currentZip.file(item.fullPath).async("text").then(function(html) {
+  var entry = getZipEntry(currentZip, item.fullPath);
+  if (!entry) {
+      div.innerHTML = "<div style='padding:2rem; color:red; text-align:center;'>Error: Could not extract chapter file: " + esc(item.fullPath) + "</div>";
+      chaptersLoadedCount++;
+      return; 
+  }
+  entry.async("text").then(function(html) {
     var doc = new DOMParser().parseFromString(html, "text/html");
     div.innerHTML = doc.body.innerHTML;
     
@@ -716,14 +737,7 @@ function loadChapter(idx) {
                     else if (srcParts[j] !== '.') parts.push(srcParts[j]);
                 }
                 var imgPath = decodeURIComponent(parts.join('/'));
-                
-                var zipEntry = currentZip.file(imgPath);
-                if (!zipEntry) {
-                    var allFiles = Object.keys(currentZip.files);
-                    for (var k=0; k<allFiles.length; k++) {
-                        if (allFiles[k].toLowerCase() === imgPath.toLowerCase()) { zipEntry = currentZip.files[allFiles[k]]; break; }
-                    }
-                }
+                var zipEntry = getZipEntry(currentZip, imgPath);
                 
                 if (zipEntry) {
                     zipEntry.async("arraybuffer").then(function(buf) {
