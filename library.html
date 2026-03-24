@@ -195,6 +195,23 @@ var currentZip = null, currentSpine = [], currentTOC = [], blobUrls = [], reader
 var allBooks = [], activeFilter = 'all';
 var currentBookId = null, chaptersLoadedCount = 0, bookIsReady = false;
 
+var idb = null;
+var dbReq = indexedDB.open("ReaderCovers", 1);
+dbReq.onupgradeneeded = function(e){ idb = e.target.result; idb.createObjectStore("covers"); };
+dbReq.onsuccess = function(e){ idb = e.target.result; };
+function saveLocalCover(id, dataUrl) { 
+    if(!idb) return; 
+    try { idb.transaction("covers", "readwrite").objectStore("covers").put(dataUrl, id); } catch(e){} 
+}
+function getLocalCover(id, cb) { 
+    if(!idb) return cb(null); 
+    try {
+        var req = idb.transaction("covers").objectStore("covers").get(id); 
+        req.onsuccess = function(){ cb(req.result); };
+        req.onerror = function(){ cb(null); };
+    } catch(e) { cb(null); }
+}
+
 // JWT UTILS
 function fetchServiceToken(callback) {
     if (accessToken && Date.now() < tokenExpiry - (5 * 60 * 1000)) { if (callback) callback(); return; }
@@ -560,11 +577,18 @@ function checkScrollCovers() {
   for (var i=0; i<cards.length; i++) {
       var c = cards[i];
       var cid = c.getAttribute('data-cover-id');
-      if (cid && !c.getAttribute('data-loaded')) {
+      var bid = c.getAttribute('data-id');
+      if (!c.getAttribute('data-loaded')) {
           var rect = c.getBoundingClientRect();
           if (rect.top < window.innerHeight + 500) { // Fetch if close to view
               c.setAttribute('data-loaded', 'true');
-              loadCover(c, cid);
+              if (cid && cid !== 'undefined' && cid !== 'null') {
+                  loadCover(c, cid);
+              } else {
+                  getLocalCover(bid, function(dataUrl) {
+                      if (dataUrl) finalizeCover(c, dataUrl);
+                  });
+              }
           }
       }
   }
@@ -656,6 +680,34 @@ function openBook(id, title, format) {
             var opfDoc = new DOMParser().parseFromString(opfText, "text/xml");
             var manifest = {}; var items = opfDoc.querySelectorAll('item');
             for (var i=0; i<items.length; i++) manifest[items[i].getAttribute('id')] = { href: items[i].getAttribute('href') };
+            
+            getLocalCover(currentBookId, function(existing) {
+                if (!existing) {
+                    var coverIdItem = opfDoc.querySelector('meta[name="cover"]');
+                    var coverId = coverIdItem ? coverIdItem.getAttribute('content') : null;
+                    var coverHref = null;
+                    if (coverId && manifest[coverId]) coverHref = manifest[coverId].href;
+                    else {
+                        var propCover = opfDoc.querySelector('item[properties~="cover-image"]');
+                        if (propCover) coverHref = propCover.getAttribute('href');
+                    }
+                    if (coverHref) {
+                        var coverEntry = getZipEntry(zip, opfDir + coverHref);
+                        if (coverEntry) {
+                            coverEntry.async("base64").then(function(b64) {
+                                var ext = coverHref.split('.').pop().toLowerCase();
+                                var mime = 'image/jpeg';
+                                if (ext === 'png') mime = 'image/png';
+                                var dataUrl = 'data:' + mime + ';base64,' + b64;
+                                saveLocalCover(currentBookId, dataUrl);
+                                var card = document.querySelector('.book-card[data-id="'+currentBookId+'"]');
+                                if (card) finalizeCover(card, dataUrl);
+                            });
+                        }
+                    }
+                }
+            });
+
             var refs = opfDoc.querySelectorAll('itemref');
             currentSpine = []; for (var j=0; j<refs.length; j++) {
                 var ref = refs[j].getAttribute('idref');
@@ -707,14 +759,32 @@ function openBook(id, title, format) {
   });
 }
 
-function loadAllChapters() { chaptersLoadedCount = 0; for (var i=0; i<currentSpine.length; i++) loadChapter(i); }
+function loadAllChapters() {
+    chaptersLoadedCount = 0;
+    var i = 0;
+    function loadNextBatch() {
+        var end = Math.min(i + 3, currentSpine.length);
+        var batch = [];
+        for (; i < end; i++) {
+            batch.push(i);
+            loadChapter(i, function() {
+                batch.pop();
+                if (batch.length === 0 && i < currentSpine.length) {
+                    setTimeout(loadNextBatch, 10);
+                }
+            });
+        }
+    }
+    loadNextBatch();
+}
 
-function loadChapter(idx) {
+function loadChapter(idx, cb) {
   var item = currentSpine[idx], div = document.getElementById('chapter-'+idx);
   var entry = getZipEntry(currentZip, item.fullPath);
   if (!entry) {
       div.innerHTML = "<div style='padding:2rem; color:red; text-align:center;'>Error: Could not extract chapter file: " + esc(item.fullPath) + "</div>";
       chaptersLoadedCount++;
+      if (cb) cb();
       return; 
   }
   entry.async("text").then(function(html) {
@@ -797,6 +867,7 @@ function loadChapter(idx) {
             trackProgress();
         }, 300);
     }
+    if (cb) cb();
   });
 }
 
