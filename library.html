@@ -735,6 +735,7 @@ function openBook(id, title, format) {
                 ncxEntry.async("text").then(function(ncxText) {
                     var ncxDoc = new DOMParser().parseFromString(ncxText, "text/xml");
                     var navs = ncxDoc.querySelectorAll('navPoint');
+                    currentTOC = [];
                     if (navs.length > 0 && tocBtn && tocPanel) {
                         tocBtn.style.display = 'inline-block';
                         var html = '<div style="padding:15px; font-family:&quot;Playfair Display&quot;, serif; font-size:16px; border-bottom:1px solid #d4cdc0; font-weight:bold; color:#1a1610;">Table of Contents</div><div style="padding:10px;">';
@@ -743,7 +744,9 @@ function openBook(id, title, format) {
                             var text = textNode ? textNode.textContent : 'Chapter '+(k+1);
                             var contentNode = navs[k].querySelector('content');
                             var src = contentNode ? contentNode.getAttribute('src') : '';
-                            html += '<div style="margin-bottom:8px; border-bottom:1px solid #ede8e0;"><a href="#" onclick="jumpToHref(&quot;' + (opfDir + src) + '&quot;); return false;" style="color:#4a443a; text-decoration:none; display:block; padding:8px 5px; font-family:&quot;IBM Plex Mono&quot;, monospace; font-size:11px;">' + text + '</a></div>';
+                            var fullHref = opfDir + src;
+                            currentTOC.push({ title: text, href: fullHref });
+                            html += '<div style="margin-bottom:8px; border-bottom:1px solid #ede8e0;"><a href="#" onclick="jumpToHref(&quot;' + fullHref + '&quot;); return false;" style="color:#4a443a; text-decoration:none; display:block; padding:8px 5px; font-family:&quot;IBM Plex Mono&quot;, monospace; font-size:11px;">' + text + '</a></div>';
                         }
                         html += '</div>';
                         tocPanel.innerHTML = html;
@@ -912,12 +915,30 @@ function trackProgress() {
   if (!bookIsReady) return;
   var area = document.getElementById('epub-content-area');
   var chapters = document.getElementsByClassName('epub-chapter');
-  var found = 0;
-  for (var i=0; i<chapters.length; i++) { if (chapters[i].offsetLeft <= area.scrollLeft + 60) found = i; }
+  var foundIdx = 0;
+  for (var i=0; i<chapters.length; i++) { 
+      if (chapters[i].offsetLeft <= area.scrollLeft + 60) foundIdx = i; 
+  }
+  
+  var chapterLabel = 'Ch ' + (foundIdx + 1);
+  if (currentTOC.length > 0 && currentSpine[foundIdx]) {
+      var spinePath = currentSpine[foundIdx].fullPath;
+      // Find the best matching TOC entry
+      var bestTitle = null;
+      for (var j=0; j<currentTOC.length; j++) {
+          var t = currentTOC[j];
+          if (t.href.split('#')[0] === spinePath) {
+              bestTitle = t.title;
+          }
+      }
+      if (bestTitle) chapterLabel = bestTitle;
+  }
+
   var w = window.innerWidth;
   var totalPages = Math.ceil(area.scrollWidth / w) || 1;
-  var currentPage = Math.round(area.scrollLeft / w) + 1;
-  document.getElementById('reader-progress').innerHTML = 'Ch ' + (found + 1) + ' | Pg ' + currentPage + '/' + totalPages;
+  var currentPage = Math.floor(area.scrollLeft / w) + 1;
+  document.getElementById('reader-progress').innerHTML = esc(chapterLabel) + ' | Pg ' + currentPage + '/' + totalPages;
+  
   if (currentBookId && area.scrollWidth > 0) {
       localStorage.setItem('readerProgress_' + currentBookId, (area.scrollLeft / area.scrollWidth));
   }
