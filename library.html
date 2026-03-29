@@ -146,7 +146,7 @@ window.onerror = function(msg, url, line) {
      <span id="reader-progress" style="margin-right:1rem; font-family:'IBM Plex Mono', monospace; font-size:10px; color:#6b6358;"></span>
      <span id="reader-title" style="font-family:'Playfair Display', serif; font-size:13px; color:#1a1610; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;"></span>
   </div>
-  <div id="toc-panel" style="display:none; position:absolute; top:50px; left:0; width:300px; bottom:0; background:#fdfcf9; border-right:1px solid #c4bdb0; z-index:200; overflow-y:auto; box-shadow: 2px 0 5px rgba(0,0,0,0.1);"></div>
+  <div id="toc-panel" style="display:none; position:absolute; top:50px; left:0; width:300px; height:calc(100% - 50px); background:#fdfcf9; border-right:1px solid #c4bdb0; z-index:20000; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow: 2px 0 5px rgba(0,0,0,0.1);"></div>
   <iframe id="pdf-frame" style="position: absolute; top: 50px; bottom: 0; left: 0; right: 0; width: 100%; height: calc(100% - 50px); border: none; display: none;"></iframe>
   <div id="epub-content-area" onscroll="trackProgress()"><div id="epub-container"></div></div>
 </div>
