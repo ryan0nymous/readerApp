@@ -49,15 +49,48 @@
   .ctrl-btn { background: #fdfcf9; border: 1px solid #c4bdb0; color: #4a443a; font-size: 11px; padding: 0.5rem 1rem; cursor: pointer; display: inline-block; text-decoration: none; border-radius: 4px; font-weight: bold; }
   .btn-accent { background: var(--accent) !important; color: var(--bg) !important; border: none !important; }
 
-  .book-card { position: relative; z-index: 9000; pointer-events: auto !important; }
+  .book-card { position: relative; z-index: 9000; pointer-events: auto !important; color: var(--text); }
   .cover-placeholder { padding: 1.5rem; text-align: center; height: 100%; color: var(--muted); font-size: 11px; }
-  .format-badge { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.8); padding: 2px 5px; font-size: 9px; }
+  .format-badge { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.8); padding: 2px 5px; font-size: 9px; color: var(--text); }
   .book-cover img { transition: opacity 0.3s; }
   .empty-msg { padding: 4rem; text-align: center; color: var(--muted); }
   body.in-app #tools { display: none; }
   body.in-app.show-tools #tools { display: block; }
   .toc-item { display: block; padding: 8px 5px; border-bottom: 1px solid #ede8e0; color: #4a443a; text-decoration: none; font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
   #epub-container a { color: inherit; }
+  #view-bar { padding: 0.5rem 1.5rem 0; overflow: hidden; border-bottom: 1px solid var(--border); }
+  .view-btn { float: left; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-family: inherit; font-size: 11px; padding: 0.6rem 0.9rem; margin-right: 0.2rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; }
+  .view-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  #letter-bar { display: none; padding: 0.5rem 1.5rem 0; overflow: hidden; }
+  #letter-list { float: left; font-size: 0; }
+  .letter { display: inline-block; font-size: 11px; color: var(--muted); padding: 6px 7px; cursor: pointer; }
+  .letter.active { color: var(--accent); font-weight: bold; }
+  #sort-sel { float: right; background: var(--surface); color: var(--text); border: 1px solid var(--border); font-family: inherit; font-size: 11px; padding: 4px; }
+  #drill-bar { display: none; padding: 0.7rem 1.5rem 0; }
+  #drill-title { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--accent); margin: 0 1rem; }
+  #panel { display: none; padding: 1.5rem; }
+  .pnl-h { color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; margin: 1.6rem 0 0.8rem; }
+  .chip { display: inline-block; border: 1px solid var(--border); color: var(--text); padding: 6px 12px; margin: 0 8px 8px 0; font-size: 11px; cursor: pointer; border-radius: 14px; }
+  .chip b { color: var(--muted); font-weight: normal; margin-left: 6px; }
+  .chip.on { border-color: var(--accent); color: var(--accent); }
+  .chip-new { border-style: dashed; color: var(--muted); }
+  .hint { color: var(--muted); font-size: 11px; line-height: 1.6; margin-bottom: 0.8rem; }
+  .row-scroll { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; font-size: 0; padding-bottom: 6px; }
+  .hero { overflow: hidden; margin-top: 1rem; }
+  .hero-cover { float: left; margin-right: 1.5rem; width: 150px; }
+  .hero-cover .book-card { margin: 0; }
+  .hero-text { overflow: hidden; }
+  .hero-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text); line-height: 1.3; }
+  .hero-author { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .hero-desc { color: #b8b0a0; font-size: 12px; line-height: 1.7; }
+  .info-btn { position: absolute; top: 5px; left: 5px; width: 22px; height: 22px; line-height: 22px; text-align: center; background: rgba(0,0,0,0.8); border-radius: 11px; color: var(--accent); font-size: 13px; cursor: pointer; z-index: 2; }
+  .pct-badge { position: absolute; bottom: 5px; left: 5px; background: var(--accent); color: var(--bg); padding: 2px 6px; font-size: 10px; font-weight: bold; }
+  .fav-mark { position: absolute; bottom: 5px; right: 5px; color: var(--accent); font-size: 16px; text-shadow: 0 0 3px #000; }
+  #detail { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.88); z-index: 9999; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  #detail-box { max-width: 560px; margin: 5vh auto; background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; }
+  .detail-cover { float: left; width: 110px; min-height: 10px; margin-right: 1.2rem; }
+  .detail-cover img { width: 100%; display: block; }
+  .detail-head { overflow: hidden; }
   #loading { display: none; text-align: center; padding: 4rem; }
   .spinner { display: inline-block; width: 30px; height: 30px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; -webkit-animation: spin 0.8s linear infinite; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -94,7 +127,14 @@ window.onerror = function(msg, url, line) {
     <div class="logo">LIBRARY</div>
     <input type="search" id="search" placeholder="search..." oninput="debouncedFilter()">
   </header>
-  <div class="filter-bar">
+  <div id="view-bar">
+    <button class="view-btn active" data-v="library" onclick="setView('library')">Library</button>
+    <button class="view-btn" data-v="recent" onclick="setView('recent')">Recent</button>
+    <button class="view-btn" data-v="favorites" onclick="setView('favorites')">★ Favorites</button>
+    <button class="view-btn" data-v="shelves" onclick="setView('shelves')">Shelves</button>
+    <button class="view-btn" data-v="discover" onclick="setView('discover')">Discover</button>
+  </div>
+  <div class="filter-bar" id="filter-bar">
     <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
     <button class="filter-btn" onclick="setFilter('epub', this)">ePub</button>
     <button class="filter-btn" onclick="setFilter('pdf', this)">PDF</button>
@@ -102,7 +142,16 @@ window.onerror = function(msg, url, line) {
     <button class="ctrl-btn" style="float:right; border:none; opacity:0.6;" onclick="toggleTools()">⚙</button>
     <span style="color:var(--muted); font-size:10px; float:right; margin-right: 1.5rem; margin-top:5px;" id="book-count"></span>
   </div>
+  <div id="letter-bar">
+    <div id="letter-list"></div>
+    <select id="sort-sel" onchange="setSort(this.value)"><option value="title">Sort: Title</option><option value="author">Sort: Author</option></select>
+  </div>
+  <div id="drill-bar">
+    <button class="ctrl-btn" onclick="closeDrill()">← Back</button><span id="drill-title"></span>
+    <button class="ctrl-btn" id="drill-del" onclick="deleteDrillShelf()" style="display:none;">Delete shelf</button>
+  </div>
   <div id="loading"><div class="spinner"></div></div>
+  <div id="panel"></div>
   <div id="book-list"></div>
 </div>
 
@@ -135,6 +184,7 @@ window.onerror = function(msg, url, line) {
   <div style="border-top: 1px solid #332d24; padding-top: 1rem; margin-top: 1rem;">
     <p style="margin-bottom: 0.5rem;">4. Covers</p>
     <button class="ctrl-btn" onclick="backfillCovers()" style="width:100%;">Fetch missing ePub covers</button>
+    <button class="ctrl-btn" onclick="fetchBookInfo()" style="width:100%; margin-top:6px;">Fetch book info (tags, series, descriptions)</button>
   </div>
   <div id="auth-status" style="margin-top: 10px; color: var(--accent-red); font-weight: bold;"></div>
 </div>
@@ -154,10 +204,13 @@ window.onerror = function(msg, url, line) {
 </div>
 </div>
 
+<div id="detail" onclick="if(event.target===this)closeDetail()"><div id="detail-box"></div></div>
+
 <div id="reader-overlay">
   <div style="height:50px; background:#ede8e0; border-bottom:1px solid #d4cdc0; padding:10px; display:flex; align-items:center;">
      <button class="ctrl-btn" onclick="closeReader()" style="margin-right:1rem;">✕ Close</button>
      <button class="ctrl-btn" id="toc-btn" onclick="toggleToc()" style="margin-right:1rem; padding:4px 8px; font-weight:bold; display:none;">☰ TOC</button>
+     <button class="ctrl-btn" id="fav-btn" onclick="toggleFav(currentBookId)" style="margin-right:0.5rem; padding:4px 8px;">☆</button>
      <button class="ctrl-btn" onclick="changeFontSize(-1)" style="margin-right:0.5rem; padding:4px 8px;">A−</button>
      <button class="ctrl-btn" onclick="changeFontSize(1)" style="margin-right:1rem; padding:4px 8px;">A+</button>
      <span id="reader-progress" style="margin-right:1rem; font-family:'IBM Plex Mono', monospace; font-size:10px; color:#6b6358;"></span>
@@ -233,11 +286,12 @@ var idb = null, idbWaiters = [], idbDone = false;
 function idbFlush() { idbDone = true; var w = idbWaiters; idbWaiters = []; for (var i = 0; i < w.length; i++) w[i](); }
 function whenIdb(fn) { if (idbDone) fn(); else idbWaiters.push(fn); }
 try {
-    var dbReq = indexedDB.open("ReaderCovers", 2);
+    var dbReq = indexedDB.open("ReaderCovers", 3);
     dbReq.onupgradeneeded = function(e) {
         var db = e.target.result;
         if (!db.objectStoreNames.contains("covers")) db.createObjectStore("covers");
         if (!db.objectStoreNames.contains("books")) db.createObjectStore("books");
+        if (!db.objectStoreNames.contains("meta")) db.createObjectStore("meta");
     };
     dbReq.onsuccess = function(e) { idb = e.target.result; idbFlush(); };
     dbReq.onerror = function() { idbFlush(); };
@@ -603,7 +657,23 @@ function loadLibrary(force) {
                     if (covers[c].parents && covers[c].parents[0]) coverMap[covers[c].parents[0]] = covers[c].id;
                 }
                 if (coverResp.nextPageToken) fetchCovers(coverResp.nextPageToken);
-                else finalizeMerge();
+                else fetchOpfs();
+            },
+            error: function() { fetchOpfs(); }
+          });
+      };
+
+      var opfMap = {};
+      var fetchOpfs = function(pageToken) {
+          var url = 'https://www.googleapis.com/drive/v3/files?pageSize=1000&fields=nextPageToken,files(id,parents)&q=' + encodeURIComponent("trashed = false and name = 'metadata.opf'");
+          if (pageToken) url += '&pageToken=' + encodeURIComponent(pageToken);
+          apiRequest({
+            url: url,
+            json: true,
+            success: function(r) {
+                var fl = r.files || [];
+                for (var c=0; c<fl.length; c++) if (fl[c].parents && fl[c].parents[0]) opfMap[fl[c].parents[0]] = fl[c].id;
+                if (r.nextPageToken) fetchOpfs(r.nextPageToken); else finalizeMerge();
             },
             error: function() { finalizeMerge(); }
           });
@@ -616,7 +686,7 @@ function loadLibrary(force) {
             for (var i=0; i<allBooksFound.length; i++) {
                 var f = allBooksFound[i];
                 var parentId = (f.parents && f.parents[0]) || null;
-                nb.push(makeBook(f, coverMap[parentId]));
+                nb.push(makeBook(f, coverMap[parentId], opfMap[parentId]));
             }
             finishScan(nb);
       };
@@ -627,10 +697,10 @@ function loadLibrary(force) {
   });
 }
 
-function makeBook(f, coverId) {
+function makeBook(f, coverId, metaId) {
     var parts = f.name.replace(/\.(epub|pdf)$/i, '').split(' - ');
     var format = f.name.split('.').pop().toLowerCase();
-    return { id: f.id, title: parts[0]||'Untitled', author: parts[1]||'Unknown', format: format, coverId: coverId, thumb: (format === 'pdf' && !coverId && f.thumbnailLink) ? f.thumbnailLink : undefined };
+    return { id: f.id, title: parts[0]||'Untitled', author: parts[1]||'Unknown', format: format, coverId: coverId, metaId: metaId, thumb: (format === 'pdf' && !coverId && f.thumbnailLink) ? f.thumbnailLink : undefined };
 }
 function finishScan(nb) {
     nb.sort(function(a,b){ return a.title.localeCompare(b.title); });
@@ -646,7 +716,7 @@ function startDeepScan(rootId) {
         for (var k=0; k<files.length; k++) {
             if (seen[files[k].id]) continue;
             seen[files[k].id] = true;
-            nb.push(makeBook(files[k], files[k].coverId));
+            nb.push(makeBook(files[k], files[k].coverId, files[k].metaId));
         }
         diagLog("Library: Scan Complete. Found " + nb.length + " unique items.", "lime");
         finishScan(nb);
@@ -666,14 +736,15 @@ function recursiveScan(fid, depth, callback) {
     json: true,
     success: function(data) {
       var items = data.files || [];
-      var books = []; var folders = []; var coverId = null;
+      var books = []; var folders = []; var coverId = null; var metaId = null;
       for (var i=0; i<items.length; i++) {
           var nm = items[i].name ? items[i].name.toLowerCase() : '';
           if (nm === 'cover.jpg') coverId = items[i].id;
+          else if (nm === 'metadata.opf') metaId = items[i].id;
           else if (nm.indexOf('.epub') !== -1 || nm.indexOf('.pdf') !== -1) books.push(items[i]);
           else if (items[i].mimeType === 'application/vnd.google-apps.folder') folders.push(items[i]);
       }
-      for (var j=0; j<books.length; j++) books[j].coverId = coverId;
+      for (var j=0; j<books.length; j++) { books[j].coverId = coverId; books[j].metaId = metaId; }
 
       if (folders.length === 0) { callback(books); return; }
 
@@ -697,14 +768,7 @@ var shownList = [], shownCount = 0, CHUNK = 48;
 function hueOf(str) { var h = 0; for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 360; return h; }
 function appendChunk() {
   var end = Math.min(shownList.length, shownCount + CHUNK), html = [];
-  for (var i = shownCount; i < end; i++) {
-      var b = shownList[i];
-      html.push('<button type="button" class="book-card" data-cover-id="'+esc(b.coverId||'')+'" data-thumb="'+esc(b.thumb||'')+'" ' +
-              'data-id="'+esc(b.id)+'" data-title="'+esc(b.title)+'" data-format="'+esc(b.format)+'" onclick="cardClick(this)">' +
-              '<div class="book-cover"><div class="cover-placeholder" style="background:hsl('+hueOf(b.title)+',22%,16%);"><div style="font-family:\'Playfair Display\',serif; font-size:13px; color:#e8e0d0;">'+esc(b.title)+'</div><div style="margin-top:8px; font-size:9px;">'+esc(b.author)+'</div></div>' +
-              '<div class="format-badge">'+esc(b.format)+'</div></div>' +
-              '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></button>');
-  }
+  for (var i = shownCount; i < end; i++) html.push(cardHtml(shownList[i]));
   document.getElementById('book-list').insertAdjacentHTML('beforeend', html.join(''));
   shownCount = end;
 }
@@ -712,7 +776,13 @@ function renderBooks(books) {
   var l = document.getElementById('book-list');
   document.getElementById('book-count').innerHTML = books.length + ' books';
   shownList = books; shownCount = 0;
-  if (!books.length) { l.innerHTML = '<div class="empty-msg">Empty. Search or ⟲.</div>'; return; }
+  if (!books.length) {
+      var msg = 'Empty. Search or ⟲.';
+      if (view === 'recent') msg = 'Nothing opened yet. Books you open will show up here.';
+      else if (view === 'favorites') msg = 'No favorites yet. Tap ⓘ on a book, or ☆ while reading.';
+      else if (drill) msg = 'Nothing here.';
+      l.innerHTML = '<div class="empty-msg">' + msg + '</div>'; return;
+  }
   l.innerHTML = '';
   appendChunk();
   setTimeout(onScrollWork, 50);
@@ -844,6 +914,8 @@ function openBook(id, title, format) {
   revokeBlobs(); revokeChapterBlobs();
   bookIsReady = false; chapterBusy = false; curChapter = -1; curPage = 0; totalPages = 1;
   currentBookId = id; currentZip = null; currentSpine = []; currentTOC = []; spineIndex = {}; chapterWeights = []; totalWeight = 1; lastSaved = '';
+  markOpened(id); lastPct = -1;
+  $('fav-btn').textContent = isFav(id) ? '★' : '☆';
   diagLog("Reader: Opening '" + title + "'...");
   $('reader-title').textContent = title;
   $('reader-overlay').style.display = 'block';
@@ -897,6 +969,7 @@ function openBook(id, title, format) {
             for (var i = 0; i < items.length; i++) manifest[items[i].getAttribute('id')] = { href: items[i].getAttribute('href'), props: items[i].getAttribute('properties') || '' };
 
             extractEpubCover(zip, opfDoc, manifest, opfPath, id);
+            if (!has(metaLite, id)) { try { setMeta(id, parseOpfMeta(opfDoc)); saveMetaLite(); } catch(e) {} }
 
             var refs = opfDoc.querySelectorAll('itemref');
             for (var j = 0; j < refs.length; j++) {
@@ -1098,7 +1171,7 @@ var PART_CHARS = 24000;
 var curChapter = -1, curParts = [], curPart = 0, chapterChars = 1;
 var curPage = 0, totalPages = 1, stride = 0;
 var chapterBusy = false, chapterBusyTimer = null, chapterSeq = 0, chapterBlobs = [];
-var chapterWeights = [], totalWeight = 1, spineIndex = {}, lastSaved = '', reflowTimer = null;
+var chapterWeights = [], totalWeight = 1, spineIndex = {}, lastSaved = '', reflowTimer = null, lastPct = -1;
 
 function $(id) { return document.getElementById(id); }
 function showStatus(html) { var s = $('reader-status'); s.innerHTML = html; s.style.display = 'block'; }
@@ -1396,7 +1469,9 @@ function updateProgress() {
         var est = Math.max(1, Math.round(chapterChars / curParts[curPart].chars * totalPages));
         pg = '~' + Math.min(est, Math.round(f * est) + 1) + '/' + est;
     }
-    $('reader-progress').textContent = label + ' | Pg ' + pg + ' | ' + Math.round(overall * 100) + '%';
+    var pctNow = Math.round(overall * 100);
+    $('reader-progress').textContent = label + ' | Pg ' + pg + ' | ' + pctNow + '%';
+    if (currentBookId && pctNow !== lastPct) { lastPct = pctNow; lsSet('readerPct_' + currentBookId, String(pctNow)); }
 
     if (currentBookId) {
         var s = JSON.stringify({ c: curChapter, f: Math.round(f * 10000) / 10000 });
@@ -1448,9 +1523,303 @@ function closeReader() {
     var tp = $('toc-panel'); if (tp) tp.style.display = 'none';
     revokeBlobs(); revokeChapterBlobs();
     currentZip = null; currentSpine = []; currentTOC = []; curParts = []; curChapter = -1; bookIsReady = false;
+    if (view === 'recent') applyFilters();
 }
 
-// ── FILTERING ──
+// ── USER DATA: favourites, shelves, reading history (device-local) ──
+function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+var userData = { favs: {}, shelves: {}, opened: {} };
+try {
+    var ud = JSON.parse(lsGet('reader_user') || 'null');
+    if (ud) { userData.favs = ud.favs || {}; userData.shelves = ud.shelves || {}; userData.opened = ud.opened || {}; }
+} catch(e) {}
+function saveUser() { lsSet('reader_user', JSON.stringify(userData)); }
+function isFav(id) { return has(userData.favs, id); }
+function toggleFav(id) {
+    if (!id) return;
+    if (isFav(id)) delete userData.favs[id]; else userData.favs[id] = 1;
+    saveUser();
+    var fb = $('fav-btn'); if (fb && id === currentBookId) fb.textContent = isFav(id) ? '★' : '☆';
+    if (detailId === id) renderDetail();
+    if (view === 'favorites') applyFilters();
+}
+function markOpened(id) {
+    var o = has(userData.opened, id) ? userData.opened[id] : { n: 0 };
+    o.n++; o.t = Date.now();
+    userData.opened[id] = o;
+    saveUser();
+}
+function shelfNames() {
+    var a = [];
+    for (var k in userData.shelves) if (has(userData.shelves, k)) a.push(k);
+    a.sort(function(x, y) { x = x.toLowerCase(); y = y.toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
+    return a;
+}
+function inShelf(name, id) { return has(userData.shelves, name) && userData.shelves[name].indexOf(id) !== -1; }
+function toggleShelf(name, id) {
+    if (!has(userData.shelves, name)) userData.shelves[name] = [];
+    var s = userData.shelves[name], i = s.indexOf(id);
+    if (i === -1) s.push(id); else s.splice(i, 1);
+    saveUser();
+}
+function makeShelf(name) {
+    name = (name || '').replace(/^\s+|\s+$/g, '');
+    if (!name) return null;
+    if (!has(userData.shelves, name)) userData.shelves[name] = [];
+    saveUser();
+    return name;
+}
+
+// ── BOOK LOOKUP / SORTED VIEWS ──
+var bookMap = {}, bookMapSrc = null;
+function getBook(id) {
+    if (bookMapSrc !== allBooks) { bookMap = {}; for (var i = 0; i < allBooks.length; i++) bookMap[allBooks[i].id] = allBooks[i]; bookMapSrc = allBooks; }
+    return has(bookMap, id) ? bookMap[id] : null;
+}
+var sortCache = { src: null, title: null, author: null };
+function sortedBooks(by) {
+    if (sortCache.src !== allBooks) { sortCache = { src: allBooks, title: null, author: null }; }
+    if (sortCache[by]) return sortCache[by];
+    var w = [], i;
+    for (i = 0; i < allBooks.length; i++) {
+        var b = allBooks[i];
+        w.push({ b: b, k: (by === 'author' ? b.author + '\u0001' + b.title : b.title + '\u0001' + b.author).toLowerCase() });
+    }
+    w.sort(function(x, y) { return x.k < y.k ? -1 : (x.k > y.k ? 1 : 0); });
+    var out = [];
+    for (i = 0; i < w.length; i++) out.push(w[i].b);
+    sortCache[by] = out;
+    return out;
+}
+function firstLetter(s) {
+    var m = /[a-z0-9]/i.exec(s || '');
+    var c = m ? m[0].toUpperCase() : '#';
+    return /[A-Z]/.test(c) ? c : '#';
+}
+function shuffleArr(a) {
+    var b = a.slice(0), i, j, t;
+    for (i = b.length - 1; i > 0; i--) { j = Math.floor(Math.random() * (i + 1)); t = b[i]; b[i] = b[j]; b[j] = t; }
+    return b;
+}
+function sample(a, n) { return shuffleArr(a).slice(0, n); }
+
+// ── BOOK INFO (tags / series / description), from Calibre metadata.opf or the EPUB's own OPF ──
+var metaLite = {};
+try { metaLite = JSON.parse(lsGet('reader_meta_lite') || '{}') || {}; } catch(e) {}
+var facetCache = null;
+function saveMetaLite() { lsSet('reader_meta_lite', JSON.stringify(metaLite)); }
+function tagsOf(id) { var m = has(metaLite, id) ? metaLite[id] : null; return (m && m.t) ? m.t.split('|') : []; }
+function metaTexts(doc, name) {
+    var out = [], i, list = doc.getElementsByTagName('dc:' + name);
+    for (i = 0; i < list.length; i++) out.push(list[i].textContent || '');
+    if (!out.length) { list = doc.getElementsByTagName(name); for (i = 0; i < list.length; i++) out.push(list[i].textContent || ''); }
+    return out;
+}
+function parseOpfMeta(doc) {
+    var tags = [], seen = {}, i, raw = metaTexts(doc, 'subject');
+    for (i = 0; i < raw.length; i++) {
+        var t = raw[i].replace(/\s+/g, ' ').replace(/\|/g, '/').replace(/^\s+|\s+$/g, '');
+        if (t && t.length <= 40 && !has(seen, t.toLowerCase())) { seen[t.toLowerCase()] = 1; tags.push(t); }
+    }
+    var series = '', metas = doc.getElementsByTagName('meta');
+    for (i = 0; i < metas.length; i++) {
+        var n = metas[i].getAttribute('name'), p = metas[i].getAttribute('property');
+        if (n === 'calibre:series') series = metas[i].getAttribute('content') || series;
+        else if (p === 'belongs-to-collection' && !series) series = (metas[i].textContent || '').replace(/^\s+|\s+$/g, '');
+    }
+    var desc = (metaTexts(doc, 'description')[0] || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '').substring(0, 800);
+    var date = metaTexts(doc, 'date')[0] || '', ym = /(\d{4})/.exec(date);
+    return { tags: tags, series: series, desc: desc, pub: (metaTexts(doc, 'publisher')[0] || '').replace(/^\s+|\s+$/g, ''), year: ym ? ym[1] : '', lang: (metaTexts(doc, 'language')[0] || '').replace(/^\s+|\s+$/g, '') };
+}
+function setMeta(id, m) {
+    metaLite[id] = { t: m.tags.slice(0, 10).join('|'), s: m.series || '', y: m.year || '' };
+    idbPut('meta', id, { d: m.desc, p: m.pub, l: m.lang });
+    facetCache = null;
+}
+
+var infoRunning = false;
+function infoCounts() {
+    var have = 0, eligible = 0;
+    for (var i = 0; i < allBooks.length; i++) {
+        if (has(metaLite, allBooks[i].id)) have++;
+        else if (allBooks[i].metaId) eligible++;
+    }
+    return { have: have, eligible: eligible };
+}
+function fetchBookInfo() {
+    if (infoRunning) { diagLog("Info: already running.", "orange"); return; }
+    var todo = [];
+    for (var i = 0; i < allBooks.length; i++) if (allBooks[i].metaId && !has(metaLite, allBooks[i].id)) todo.push(allBooks[i]);
+    if (!todo.length) { diagLog("Info: nothing new to fetch. (Books without a metadata.opf file get info when you open them.)", "lime"); refreshOrganizeUi(); return; }
+    infoRunning = true;
+    var idx = 0, active = 0, done = 0, total = todo.length;
+    var finish = function() {
+        infoRunning = false; saveMetaLite(); facetCache = null;
+        diagLog("Info: finished (" + done + " of " + total + ").", "lime");
+        refreshOrganizeUi();
+    };
+    var pump = function() {
+        while (active < 3 && idx < todo.length) (function(b) {
+            active++;
+            var next = function() {
+                active--; done++;
+                if (done % 25 === 0) { saveMetaLite(); diagLog("Info: " + done + "/" + total); var st = $('info-status'); if (st) st.textContent = 'Fetching info… ' + done + '/' + total; }
+                if (idx >= todo.length && active === 0) finish(); else pump();
+            };
+            apiRequest({
+                url: 'https://www.googleapis.com/drive/v3/files/' + b.metaId + '?alt=media',
+                success: function(text) {
+                    try { setMeta(b.id, parseOpfMeta(new DOMParser().parseFromString(String(text), 'text/xml'))); }
+                    catch(e) { metaLite[b.id] = { t: '', s: '', y: '' }; }
+                    next();
+                },
+                error: function() { next(); }
+            });
+        })(todo[idx++]);
+    };
+    diagLog("Info: fetching " + total + " metadata files…");
+    pump();
+}
+function facets() {
+    if (facetCache) return facetCache;
+    var tags = {}, series = {}, authors = {}, i, j;
+    for (i = 0; i < allBooks.length; i++) {
+        var b = allBooks[i], m = has(metaLite, b.id) ? metaLite[b.id] : null;
+        if (m) {
+            var ts = tagsOf(b.id);
+            for (j = 0; j < ts.length; j++) { var k = ts[j].toLowerCase(); if (!has(tags, k)) tags[k] = { n: ts[j], c: 0 }; tags[k].c++; }
+            if (m.s) { if (!has(series, m.s)) series[m.s] = { n: m.s, c: 0 }; series[m.s].c++; }
+        }
+        if (b.author && b.author !== 'Unknown') { if (!has(authors, b.author)) authors[b.author] = { n: b.author, c: 0 }; authors[b.author].c++; }
+    }
+    var flat = function(o, min) {
+        var a = [];
+        for (var k in o) if (has(o, k) && o[k].c >= min) a.push(o[k]);
+        a.sort(function(x, y) { return y.c - x.c || (x.n.toLowerCase() < y.n.toLowerCase() ? -1 : 1); });
+        return a;
+    };
+    facetCache = { tags: flat(tags, 1), series: flat(series, 2), authors: flat(authors, 2) };
+    return facetCache;
+}
+
+// ── VIEWS ──
+var view = 'library', drill = null, activeLetter = '', sortBy = 'title', moreOpen = {}, discoverState = null, detailId = null;
+try { var sb = lsGet('reader_sort'); if (sb === 'author' || sb === 'title') sortBy = sb; } catch(e) {}
+
+function isGridView() { return !(view === 'discover' || (view === 'shelves' && !drill)); }
+function updateViewBar() {
+    var btns = document.getElementsByClassName('view-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].className = 'view-btn' + (btns[i].getAttribute('data-v') === view ? ' active' : '');
+    var sel = $('sort-sel'); if (sel) sel.value = sortBy;
+}
+function setView(v) {
+    view = v; drill = null; activeLetter = ''; discoverState = null;
+    updateViewBar(); renderView();
+    window.scrollTo(0, 0);
+}
+function openDrill(kind, key) {
+    closeDetail();
+    view = 'shelves'; drill = { kind: kind, key: key }; activeLetter = '';
+    updateViewBar(); renderView();
+    window.scrollTo(0, 0);
+}
+function closeDrill() { drill = null; updateViewBar(); renderView(); window.scrollTo(0, 0); }
+function deleteDrillShelf() {
+    if (!drill || drill.kind !== 'shelf') return;
+    if (!confirm('Delete shelf "' + drill.key + '"? (The books stay in your library.)')) return;
+    delete userData.shelves[drill.key]; saveUser();
+    closeDrill();
+}
+function setSort(v) { sortBy = v; lsSet('reader_sort', v); if (isGridView()) applyFilters(); }
+function setLetter(l) { activeLetter = (activeLetter === l) ? '' : l; buildLetterBar(); applyFilters(); }
+function buildLetterBar() {
+    var h = '', L = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for (var i = 0; i < L.length; i++) h += '<span class="letter' + (activeLetter === L.charAt(i) ? ' active' : '') + '" onclick="setLetter(\'' + L.charAt(i) + '\')">' + L.charAt(i) + '</span>';
+    $('letter-list').innerHTML = h;
+}
+
+function renderView() {
+    var grid = $('book-list'), panel = $('panel');
+    var gridMode = isGridView();
+    $('filter-bar').style.display = gridMode ? 'block' : 'none';
+    $('letter-bar').style.display = (gridMode && view === 'library') ? 'block' : 'none';
+    $('drill-bar').style.display = drill ? 'block' : 'none';
+    if (drill) {
+        $('drill-title').textContent = ({ shelf: 'Shelf', tag: 'Tag', series: 'Series', author: 'Author' }[drill.kind] || '') + ': ' + drill.key;
+        $('drill-del').style.display = drill.kind === 'shelf' ? 'inline-block' : 'none';
+    }
+    if (!gridMode) {
+        grid.style.display = 'none'; grid.innerHTML = ''; shownList = []; shownCount = 0;
+        panel.style.display = 'block';
+        if (view === 'discover') renderDiscover(); else renderShelves();
+        return;
+    }
+    panel.style.display = 'none'; panel.innerHTML = '';
+    grid.style.display = 'block';
+    if (view === 'library') buildLetterBar();
+    applyFilters();
+}
+function refreshOrganizeUi() {
+    if (!isGridView()) renderView();
+    var st = $('info-status'); if (st) st.textContent = infoStatusText();
+    if (detailId) renderDetail();
+}
+
+function recentBooks() {
+    var arr = [];
+    for (var id in userData.opened) if (has(userData.opened, id)) { var b = getBook(id); if (b) arr.push({ b: b, t: userData.opened[id].t || 0 }); }
+    arr.sort(function(x, y) { return y.t - x.t; });
+    var out = [];
+    for (var i = 0; i < arr.length && i < 60; i++) out.push(arr[i].b);
+    return out;
+}
+function matchDrill(b) {
+    if (drill.kind === 'shelf') return inShelf(drill.key, b.id);
+    if (drill.kind === 'author') return b.author === drill.key;
+    var m = has(metaLite, b.id) ? metaLite[b.id] : null;
+    if (!m) return false;
+    if (drill.kind === 'series') return m.s === drill.key;
+    var ts = tagsOf(b.id), k = drill.key.toLowerCase();
+    for (var i = 0; i < ts.length; i++) if (ts[i].toLowerCase() === k) return true;
+    return false;
+}
+function searchHaystack(b) {
+    var m = has(metaLite, b.id) ? metaLite[b.id] : null;
+    return (b.title + ' ' + b.author + (m ? ' ' + m.t.replace(/\|/g, ' ') + ' ' + m.s : '')).toLowerCase();
+}
+
+function applyFilters() {
+    if (!isGridView()) { renderView(); return; }
+    var q = $('search').value.toLowerCase().replace(/^\s+|\s+$/g, '');
+    var base;
+    if (view === 'recent' && !drill) base = recentBooks();
+    else base = sortedBooks(sortBy);
+    var f = [], words = q ? q.split(/\s+/) : [], i, j;
+    for (i = 0; i < base.length; i++) {
+        var b = base[i];
+        if (activeFilter !== 'all' && b.format !== activeFilter) continue;
+        if (view === 'favorites' && !drill && !isFav(b.id)) continue;
+        if (drill && !matchDrill(b)) continue;
+        if (activeLetter && view === 'library' && firstLetter(sortBy === 'author' ? b.author : b.title) !== activeLetter) continue;
+        if (words.length) {
+            var hay = searchHaystack(b), ok = true;
+            for (j = 0; j < words.length; j++) if (hay.indexOf(words[j]) === -1) { ok = false; break; }
+            if (!ok) continue;
+        }
+        f.push(b);
+    }
+    renderBooks(f);
+}
+var filterTimer = null;
+function debouncedFilter() {
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(function() {
+        var q = $('search').value;
+        if (q && !isGridView()) setView('library');
+        else if (q && view === 'recent') applyFilters();
+        else applyFilters();
+    }, 150);
+}
 function setFilter(t, b) {
   activeFilter = t;
   var btns = document.getElementsByClassName('filter-btn');
@@ -1458,6 +1827,169 @@ function setFilter(t, b) {
   b.className = 'filter-btn active';
   applyFilters();
 }
+
+// ── CARDS ──
+function cardHtml(b) {
+    var extra = '';
+    if (view === 'recent') { var p = lsGet('readerPct_' + b.id); if (p) extra += '<div class="pct-badge">' + esc(p) + '%</div>'; }
+    if (isFav(b.id)) extra += '<div class="fav-mark">★</div>';
+    return '<button type="button" class="book-card" data-cover-id="'+esc(b.coverId||'')+'" data-thumb="'+esc(b.thumb||'')+'" ' +
+        'data-id="'+esc(b.id)+'" data-title="'+esc(b.title)+'" data-format="'+esc(b.format)+'" onclick="cardClick(this)">' +
+        '<div class="book-cover"><div class="cover-placeholder" style="background:hsl('+hueOf(b.title)+',22%,16%);"><div style="font-family:\'Playfair Display\',serif; font-size:13px; color:#e8e0d0;">'+esc(b.title)+'</div><div style="margin-top:8px; font-size:9px;">'+esc(b.author)+'</div></div>' +
+        '<div class="format-badge">'+esc(b.format)+'</div><span class="info-btn" onclick="event.stopPropagation(); showDetail(\''+esc(b.id)+'\');">ⓘ</span>' + extra + '</div>' +
+        '<div class="book-info"><div class="book-title">'+esc(b.title)+'</div><div class="book-author">'+esc(b.author)+'</div></div></button>';
+}
+function openById(id) { var b = getBook(id); if (b) { closeDetail(); openBook(b.id, b.title, b.format); } }
+function chipHtml(kind, key, count, on) {
+    return '<span class="chip' + (on ? ' on' : '') + '" data-kind="' + kind + '" data-k="' + esc(key) + '" onclick="chipClick(this)">' + esc(key) + (count != null ? '<b>' + count + '</b>' : '') + '</span>';
+}
+function chipClick(el) {
+    var kind = el.getAttribute('data-kind'), key = el.getAttribute('data-k');
+    if (kind === 'newshelf') { newShelfPrompt(false); return; }
+    if (kind === 'more') { moreOpen[key] = !moreOpen[key]; renderShelves(); return; }
+    openDrill(kind, key);
+}
+function newShelfPrompt(addCurrent) {
+    var name = makeShelf(prompt('Name for the new shelf:', ''));
+    if (!name) return;
+    if (addCurrent && detailId) { if (!inShelf(name, detailId)) toggleShelf(name, detailId); renderDetail(); }
+    else refreshOrganizeUi();
+}
+
+// ── SHELVES VIEW ──
+function infoStatusText() {
+    var c = infoCounts();
+    return 'Info (tags, series, descriptions) for ' + c.have + ' of ' + allBooks.length + ' books.' + (c.eligible ? ' ' + c.eligible + ' more can be fetched.' : '');
+}
+function renderShelves() {
+    var p = $('panel'), h = [], names = shelfNames(), i;
+    h.push('<div class="pnl-h" style="margin-top:0">My shelves</div>');
+    for (i = 0; i < names.length; i++) h.push(chipHtml('shelf', names[i], userData.shelves[names[i]].length));
+    h.push('<span class="chip chip-new" data-kind="newshelf" data-k="" onclick="chipClick(this)">+ New shelf</span>');
+    if (!names.length) h.push('<div class="hint">Shelves are yours to make: tap ⓘ on any book to put it on a shelf.</div>');
+
+    var f = facets();
+    var sec = function(title, key, list, kind, limit) {
+        if (!list.length) return;
+        h.push('<div class="pnl-h">' + title + '</div>');
+        var n = moreOpen[key] ? list.length : Math.min(limit, list.length);
+        for (var j = 0; j < n; j++) h.push(chipHtml(kind, list[j].n, list[j].c));
+        if (list.length > limit) h.push('<span class="chip chip-new" data-kind="more" data-k="' + key + '" onclick="chipClick(this)">' + (moreOpen[key] ? 'fewer' : '+' + (list.length - limit) + ' more') + '</span>');
+    };
+    sec('Tags', 'tags', f.tags, 'tag', 40);
+    sec('Series', 'series', f.series, 'series', 30);
+    sec('Authors', 'authors', f.authors, 'author', 40);
+
+    h.push('<div class="pnl-h">Book info</div><div class="hint" id="info-status">' + esc(infoStatusText()) + '</div>');
+    h.push('<button class="ctrl-btn" onclick="fetchBookInfo()">Fetch book info</button>');
+    p.innerHTML = h.join('');
+}
+
+// ── DISCOVER VIEW ──
+function pickSurprise(exclude) {
+    var pool = [], all = [], i;
+    for (i = 0; i < allBooks.length; i++) {
+        var b = allBooks[i];
+        if (exclude && b.id === exclude) continue;
+        all.push(b);
+        if (!has(userData.opened, b.id)) pool.push(b);
+    }
+    pool = pool.length ? pool : all;
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+}
+function buildDiscover() {
+    var ds = { pick: pickSurprise(null), sections: [] }, i;
+    ds.sections.push({ title: 'Random picks', books: sample(allBooks, 12) });
+    var unopened = [];
+    for (i = 0; i < allBooks.length; i++) if (!has(userData.opened, allBooks[i].id)) unopened.push(allBooks[i]);
+    if (unopened.length && unopened.length < allBooks.length) ds.sections.push({ title: 'Never opened', books: sample(unopened, 12) });
+    var rec = recentBooks();
+    if (rec.length && rec[0].author && rec[0].author !== 'Unknown') {
+        var same = [];
+        for (i = 0; i < allBooks.length; i++) if (allBooks[i].author === rec[0].author && allBooks[i].id !== rec[0].id) same.push(allBooks[i]);
+        if (same.length) ds.sections.push({ title: 'More from ' + rec[0].author, books: sample(same, 12) });
+    }
+    var tg = facets().tags, elig = [];
+    for (i = 0; i < tg.length; i++) if (tg[i].c >= 3) elig.push(tg[i]);
+    if (elig.length) {
+        var t = elig[Math.floor(Math.random() * elig.length)], withTag = [], k = t.n.toLowerCase();
+        for (i = 0; i < allBooks.length; i++) { var ts = tagsOf(allBooks[i].id); for (var j = 0; j < ts.length; j++) if (ts[j].toLowerCase() === k) { withTag.push(allBooks[i]); break; } }
+        ds.sections.push({ title: 'Something in “' + t.n + '”', books: sample(withTag, 12), kind: 'tag', key: t.n });
+    }
+    return ds;
+}
+function heroHtml(b) {
+    var tags = tagsOf(b.id), th = '', i;
+    for (i = 0; i < tags.length && i < 5; i++) th += chipHtml('tag', tags[i], null);
+    var m = has(metaLite, b.id) ? metaLite[b.id] : null;
+    return '<div class="hero"><div class="hero-cover">' + cardHtml(b) + '</div><div class="hero-text">' +
+        '<div class="pnl-h" style="margin-top:0">Surprise me</div>' +
+        '<div class="hero-title">' + esc(b.title) + '</div><div class="hero-author">' + esc(b.author) + (m && m.s ? ' · ' + esc(m.s) : '') + '</div>' +
+        '<div style="margin:0.6rem 0;">' + th + '</div><div id="hero-desc" class="hero-desc"></div>' +
+        '<div style="margin-top:1rem;"><button class="ctrl-btn btn-accent" onclick="openById(\'' + esc(b.id) + '\')">Open</button> ' +
+        '<button class="ctrl-btn" onclick="anotherPick()">Another</button> <button class="ctrl-btn" onclick="toggleFav(\'' + esc(b.id) + '\'); renderDiscover();">' + (isFav(b.id) ? '★' : '☆') + '</button></div></div></div>';
+}
+function anotherPick() { if (discoverState) { discoverState.pick = pickSurprise(discoverState.pick ? discoverState.pick.id : null); renderDiscover(); } }
+function reshuffle() { discoverState = null; renderDiscover(); }
+function renderDiscover() {
+    var p = $('panel');
+    if (!allBooks.length) { p.innerHTML = '<div class="empty-msg">Your library is empty. Tap ⟲ to load it.</div>'; return; }
+    if (!discoverState) discoverState = buildDiscover();
+    var ds = discoverState, h = [], i;
+    h.push('<div style="text-align:right;"><span class="chip chip-new" onclick="reshuffle()">↻ Shuffle everything</span></div>');
+    if (ds.pick) h.push(heroHtml(ds.pick));
+    for (i = 0; i < ds.sections.length; i++) {
+        var s = ds.sections[i], cards = [];
+        for (var j = 0; j < s.books.length; j++) cards.push(cardHtml(s.books[j]));
+        h.push('<div class="pnl-h">' + esc(s.title) + (s.kind ? ' <span class="chip chip-new" style="margin:0 0 0 10px;" data-kind="' + s.kind + '" data-k="' + esc(s.key) + '" onclick="chipClick(this)">see all</span>' : '') + '</div><div class="row-scroll">' + cards.join('') + '</div>');
+    }
+    var c = infoCounts();
+    if (c.eligible) h.push('<div class="hint">Discover gets better with book info (tags, series, descriptions). ' + c.eligible + ' books can be fetched: <span class="chip chip-new" onclick="fetchBookInfo()">fetch now</span></div>');
+    p.innerHTML = h.join('');
+    if (ds.pick) idbGet('meta', ds.pick.id, function(m) {
+        var el = $('hero-desc');
+        if (el) el.textContent = (m && m.d) ? (m.d.length > 360 ? m.d.substring(0, 360) + '…' : m.d) : '';
+    });
+    setTimeout(onScrollWork, 50);
+}
+
+// ── DETAIL SHEET ──
+function showDetail(id) { detailId = id; renderDetail(); $('detail').style.display = 'block'; }
+function closeDetail() { detailId = null; var d = $('detail'); if (d) d.style.display = 'none'; }
+function detailShelf(el) { toggleShelf(el.getAttribute('data-k'), detailId); renderDetail(); }
+function renderDetail() {
+    var b = detailId ? getBook(detailId) : null;
+    if (!b) { closeDetail(); return; }
+    var m = has(metaLite, b.id) ? metaLite[b.id] : null, tags = tagsOf(b.id), h = [], i;
+    h.push('<div style="overflow:hidden;"><div id="detail-cover" class="detail-cover"></div><div class="detail-head">' +
+        '<div class="hero-title">' + esc(b.title) + '</div><div class="hero-author">' + esc(b.author) + ' · ' + esc(b.format.toUpperCase()) + (m && m.y ? ' · ' + esc(m.y) : '') + '</div>');
+    if (m && m.s) h.push('<div style="margin-top:0.6rem;">' + chipHtml('series', m.s, null) + '</div>');
+    h.push('<div id="detail-pub" class="hint"></div></div></div>');
+    if (tags.length) { h.push('<div style="margin-top:1rem;">'); for (i = 0; i < tags.length; i++) h.push(chipHtml('tag', tags[i], null)); h.push('</div>'); }
+    h.push('<div id="detail-desc" class="hero-desc" style="margin-top:0.8rem;"></div>');
+    h.push('<div style="margin-top:1rem;"><button class="ctrl-btn btn-accent" onclick="openById(\'' + esc(b.id) + '\')">Open</button> ' +
+        '<button class="ctrl-btn" onclick="toggleFav(\'' + esc(b.id) + '\')">' + (isFav(b.id) ? '★ Favorite' : '☆ Favorite') + '</button> ' +
+        '<button class="ctrl-btn" onclick="closeDetail()">Close</button></div>');
+    h.push('<div class="pnl-h">Shelves</div>');
+    var names = shelfNames();
+    for (i = 0; i < names.length; i++) h.push('<span class="chip' + (inShelf(names[i], b.id) ? ' on' : '') + '" data-k="' + esc(names[i]) + '" onclick="detailShelf(this)">' + (inShelf(names[i], b.id) ? '✓ ' : '') + esc(names[i]) + '</span>');
+    h.push('<span class="chip chip-new" onclick="newShelfPrompt(true)">+ New shelf</span>');
+    $('detail-box').innerHTML = h.join('');
+
+    var key = b.coverId ? 'drive_' + b.coverId : b.id;
+    var put = function(src) {
+        var box = $('detail-cover');
+        if (box && detailId === b.id && !box.firstChild) { var im = document.createElement('img'); im.src = src; box.appendChild(im); }
+    };
+    if (coverMem[key]) put(coverMem[key]);
+    else getLocalCover(key, function(d) { if (d) put(d); else if (b.thumb) put(b.thumb.replace(/=s\d+$/, '=s300')); });
+    idbGet('meta', b.id, function(mm) {
+        var d = $('detail-desc'), pu = $('detail-pub');
+        if (d) d.textContent = (mm && mm.d) ? mm.d : (b.metaId || m ? '' : 'No description yet. Open this book once, or use “Fetch book info”.');
+        if (pu && mm) pu.textContent = [mm.p, mm.l].filter(function(x) { return x; }).join(' · ');
+    });
+}
+
 window.onerror = function(msg, url, line) {
   diagLog("JS ERROR: " + msg + " (at " + line + ")", "red");
   var m = document.getElementById('error-monitor');
@@ -1471,20 +2003,7 @@ window.onload = function() {
       if (c) { allBooks = c; applyFilters(); } else loadLibrary(true);
   }
 };
-
-var filterTimer = null;
-function debouncedFilter() { clearTimeout(filterTimer); filterTimer = setTimeout(applyFilters, 150); }
-function applyFilters() {
-  var q = document.getElementById('search').value.toLowerCase();
-  var f = [];
-  for (var i=0; i<allBooks.length; i++) {
-      var b = allBooks[i];
-      var mType = (activeFilter === 'all' || b.format === activeFilter);
-      var mSearch = (!q || b.title.toLowerCase().indexOf(q) !== -1 || b.author.toLowerCase().indexOf(q) !== -1);
-      if (mType && mSearch) f.push(b);
-  }
-  renderBooks(f);
-}
+document.addEventListener('DOMContentLoaded', function() { updateViewBar(); buildLetterBar(); });
 </script>
 </body>
 </html>
