@@ -221,6 +221,7 @@ window.onerror = function(msg, url, line) {
   <div id="epub-content-area"><div id="epub-container" lang="en"></div></div>
   <div id="reader-status"></div>
   <style id="dyn-style"></style>
+  <style id="book-style"></style>
 </div>
 
 <script>
@@ -913,7 +914,7 @@ function openBook(id, title, format) {
   var gen = ++readerGen;
   revokeBlobs(); revokeChapterBlobs();
   bookIsReady = false; chapterBusy = false; curChapter = -1; curPage = 0; totalPages = 1;
-  currentBookId = id; currentZip = null; currentSpine = []; currentTOC = []; spineIndex = {}; chapterWeights = []; totalWeight = 1; lastSaved = '';
+  currentBookId = id; currentZip = null; currentSpine = []; currentTOC = []; spineIndex = {}; chapterWeights = []; totalWeight = 1; lastSaved = ''; cssCache = {}; $('book-style').textContent = '';
   markOpened(id); lastPct = -1;
   $('fav-btn').textContent = isFav(id) ? '★' : '☆';
   diagLog("Reader: Opening '" + title + "'...");
@@ -1216,7 +1217,66 @@ function parseChapter(text) {
     for (i = scripts.length - 1; i >= 0; i--) scripts[i].parentNode.removeChild(scripts[i]);
     var nodes = [], kids = body.childNodes;
     for (i = 0; i < kids.length; i++) nodes.push(document.importNode(kids[i], true));
+    var hrefs = [], links = doc.getElementsByTagName('link'), inline = '', sts = doc.getElementsByTagName('style');
+    for (i = 0; i < links.length; i++) {
+        if ((links[i].getAttribute('rel') || '').toLowerCase().indexOf('stylesheet') !== -1 && links[i].getAttribute('href')) hrefs.push(links[i].getAttribute('href'));
+    }
+    for (i = 0; i < sts.length; i++) inline += (sts[i].textContent || '') + '\n';
+    nodes.css = { links: hrefs, inline: inline };
     return nodes;
+}
+
+// ── BOOK STYLING ──
+// Books mark italics/bold/chapter-number sizes with CSS classes (<span class="italic">). Importing the
+// whole stylesheet would fight the reader's layout, so only a whitelist of harmless text styles is kept.
+var cssCache = {};
+function safeCss(text) {
+    text = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@[^{;]+\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '');
+    var out = [], re = /([^{}]+)\{([^{}]*)\}/g, m, i, j;
+    while ((m = re.exec(text))) {
+        var sels = m[1].split(','), keep = [];
+        for (i = 0; i < sels.length; i++) {
+            var sel = sels[i].replace(/^\s+|\s+$/g, '');
+            if (sel && /^(?:[a-zA-Z][\w-]*)?(?:\.[\w-]+)?$/.test(sel) && !/^(html|body)$/i.test(sel)) keep.push('#epub-container ' + sel);
+        }
+        if (!keep.length) continue;
+        var decls = m[2].split(';'), ok = [];
+        for (j = 0; j < decls.length; j++) {
+            var k = decls[j].indexOf(':');
+            if (k < 1) continue;
+            var prop = decls[j].substring(0, k).replace(/\s+/g, '').toLowerCase();
+            var val = decls[j].substring(k + 1).replace(/!important/i, '').replace(/^\s+|\s+$/g, '').toLowerCase();
+            var good = false;
+            if (prop === 'font-style') good = /^(italic|oblique|normal)$/.test(val);
+            else if (prop === 'font-weight') good = /^(bold|bolder|normal|[1-9]00)$/.test(val);
+            else if (prop === 'font-variant') good = /^(small-caps|normal)$/.test(val);
+            else if (prop === 'text-transform') good = /^(uppercase|lowercase|capitalize|none)$/.test(val);
+            else if (prop === 'text-decoration') good = /^(underline|line-through|none)$/.test(val);
+            else if (prop === 'vertical-align') good = /^(super|sub)$/.test(val);
+            else if (prop === 'font-size') good = /^[\d.]+(em|%)$/.test(val);
+            else if (prop === 'text-align') good = /^(center|right|left)$/.test(val);
+            if (good) ok.push(prop + ':' + val);
+        }
+        if (ok.length) out.push(keep.join(',') + '{' + ok.join(';') + '}');
+    }
+    return out.join('\n');
+}
+function loadBookCss(item, info, cb) {
+    var paths = [], i = 0, texts = [];
+    for (var n = 0; n < info.links.length; n++) paths.push(resolveHref(item.fullPath, info.links[n]));
+    var key = paths.join('|') + '#' + info.inline.length;
+    if (has(cssCache, key)) { $('book-style').textContent = cssCache[key]; cb(); return; }
+    var next = function() {
+        if (i >= paths.length) {
+            var css = safeCss(texts.join('\n') + '\n' + info.inline);
+            cssCache[key] = css; $('book-style').textContent = css;
+            cb(); return;
+        }
+        var e = getZipEntry(currentZip, paths[i++]);
+        if (!e) { next(); return; }
+        e.async("text").then(function(t) { texts.push(t); next(); }, next);
+    };
+    next();
 }
 function nodeWeight(n) {
     if (n.nodeType === 3) return (n.nodeValue || '').length;
@@ -1274,6 +1334,12 @@ function showChapter(idx, target) {
     var item = currentSpine[idx], entry = getZipEntry(currentZip, item.fullPath);
     var proceed = function(nodes) {
         if (gen !== readerGen || seq !== chapterSeq) return;
+        loadBookCss(item, nodes.css || { links: [], inline: '' }, function() {
+            if (gen !== readerGen || seq !== chapterSeq) return;
+            proceed2(nodes);
+        });
+    };
+    var proceed2 = function(nodes) {
         curChapter = idx;
         curParts = splitParts(nodes);
         var pi = 0, t = null;
